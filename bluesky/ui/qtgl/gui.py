@@ -79,10 +79,30 @@ def start(mode):
     splash.showMessage('Constructing main window')
     app.processEvents()
     win = MainWindow(mode)
-    win.show()
     splash.showMessage('Done!')
     app.processEvents()
     splash.finish(win)
+
+    # Quick hack to connect to a remote simulation
+    import sys
+    arg = '--bluesky_host='
+    host = next((x for x in sys.argv if x.startswith(arg)), None)
+    if host is not None:
+      host = host[len(arg):]
+      try:
+        print('Attempting connection to BlueSky at: {}'.format(host))
+        client.connect(hostname=host, event_port=bs.settings.event_port,
+                   stream_port=bs.settings.stream_port, timeout=5)
+      except TimeoutError:
+        print('Failed to connect to BlueSky server at {}, exiting'.format(host))
+        QApplication.quit()
+        sys.exit(0)
+      win.show()
+      app.exec_()
+      return
+
+    win.show()
+
     # If this instance of the gui is started in client-only mode, show
     # server selection dialog
     if mode == 'client':
