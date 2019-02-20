@@ -62,10 +62,15 @@ class OpenAP(PerfBase):
 
         else:
             # convert to known aircraft type
-            if actype not in self.coeff.actypes_fixwing:
+            if (actype not in self.coeff.actypes_fixwing) or (actype not in self.coeff.limits_fixwing.keys()):
+                print("WARNING: Aircraft type: %s was not found. It is set to %s." % (actype, 'A320'))
                 actype = 'A320'
 
             # populate fuel flow model
+            if not self.coeff.acs_fixwing[actype]['engines']:
+                print("WARNING: Engine type of %s was not found. Aircraft type is set to %s." % (actype, 'A320'))
+                actype = 'A320'
+
             es = self.coeff.acs_fixwing[actype]['engines']
             e = es[list(es.keys())[0]]
             coeff_a, coeff_b, coeff_c = thrust.compute_eng_ff_coeff(e['ff_idl'], e['ff_app'], e['ff_co'], e['ff_to'])
