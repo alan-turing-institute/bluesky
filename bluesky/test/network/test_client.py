@@ -18,12 +18,16 @@ import os
 
 from bluesky.network import Client, Server
 
+# Suppress all DeprecationWarnings for this module
+pytestmark = pytest.mark.filterwarnings("ignore:.*encoding is deprecated.*:DeprecationWarning")
+
 EVENT_PORT = 9000
 STREAM_PORT = 9001
 
 # Aircraft ID and altitude:
 acid = '1000'
 altitude = 17000
+
 
 
 @pytest.fixture(scope="function")
@@ -137,6 +141,13 @@ def poll_for_position(client, server, acid_, attr_name, target_string, timeout=1
             sys.exit(0)
     return
 
+def reset_sleep():
+    """Get the sleep duration after RESET."""
+
+    if 'RESET_SLEEP' in os.environ:
+        return int(os.getenv('RESET_SLEEP'))
+    return 2
+
 
 # Suppress DeprecationWarning, due to msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8') in client.py
 @pytest.mark.filterwarnings("ignore:.*encoding is deprecated.*:PendingDeprecationWarning")
@@ -152,7 +163,7 @@ def test_send_event_stackcmd_cre_pos(server):
         # Wait for the RESET event to be processed.
         # Omitting this line breaks the test; in that case the text response to the POS
         # command is constantly: "BlueSky Console Window: Enter HELP or ? for info."
-        time.sleep(2)
+        time.sleep(reset_sleep())
 
         # Create an aircraft with a particular ID and altitude.
         cre_command_data = 'CRE {} 0 0 0 0 {} 500'.format(acid, str(altitude))
@@ -213,7 +224,7 @@ def test_send_event_stackcmd_ic_alt(server, scenario_filename):
         # Wait for the RESET event to be processed.
         # Omitting this line breaks the test; in that case the text response to the POS
         # command is constantly: "BlueSky Console Window: Enter HELP or ? for info."
-        time.sleep(2)
+        time.sleep(reset_sleep())
 
         # Initialise the scenario.
         target.send_event(b'STACKCMD', 'IC {}'.format(scenario_filename), target=b'*')
