@@ -1,6 +1,6 @@
 
 # In addition to requirements.txt, the following are required for development and testing
-psutil
+psutil == 5.5.*
 
 # PyTest 4 is also available, can we upgrade to that?
 pytest == 4.1.*
