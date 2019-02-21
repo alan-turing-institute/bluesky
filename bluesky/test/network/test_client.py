@@ -29,6 +29,7 @@ acid = '1000'
 altitude = 17000
 
 
+
 @pytest.fixture(scope="function")
 def server():
     """Start the server in headless mode."""
