@@ -18,12 +18,16 @@ import os
 
 from bluesky.network import Client, Server
 
+# Suppress all DeprecationWarnings for this module
+pytestmark = pytest.mark.filterwarnings("ignore:.*encoding is deprecated.*:DeprecationWarning")
+
 EVENT_PORT = 9000
 STREAM_PORT = 9001
 
 # Aircraft ID and altitude:
 acid = '1000'
 altitude = 17000
+
 
 
 @pytest.fixture(scope="function")
@@ -79,7 +83,7 @@ def test_send_event_quit(server):
         shutdown_server(server)
 
 
-def poll_for_position(client, server, acid, attr_name, target_string = 'Info on {}'.format(acid)):
+def poll_for_position(client, server, acid_, attr_name, target_string, timeout=10):
     """ Poll the server for aircraft position.
 
     Keyword arguments:
@@ -88,6 +92,7 @@ def poll_for_position(client, server, acid, attr_name, target_string = 'Info on 
         acid -- an aircraft ID
         attr_name -- name of attribute to be added to client; will contain the result text returned by the POS command
         target_string -- a target string to be sought in the info returned by the POS command (default 'Info on <acid>')
+        timeout -- a timeout in seconds
 
     This function will not return until the target_string is found in the result text returned by the POS command.
     """
@@ -108,18 +113,19 @@ def poll_for_position(client, server, acid, attr_name, target_string = 'Info on 
     client.event_received.connect(event_subscriber)
 
     # Define the POS command to poll for aircraft location.
-    pos_command_data = 'POS ' + acid
+    pos_command_data = 'POS ' + acid_
 
     # Keep polling until the target string is found in the result text.
     done = False
-    while not done:
+    start_time = time.time()
+    while not done and time.time() < start_time + timeout:
         try:
             # Poll for aircraft location.
             client.send_event(b'STACKCMD', pos_command_data, target=b'*')
             client.receive()
 
             # This pause is not strictly necessary but avoids excessive polling before the server is ready.
-            time.sleep(0.01)
+            time.sleep(0.1)
 
             # Check that the client's servers dictionary is no longer empty.
             assert len(client.servers) == 1, "Client's servers dictionary should have one element"
@@ -134,6 +140,13 @@ def poll_for_position(client, server, acid, attr_name, target_string = 'Info on 
         except KeyboardInterrupt:
             sys.exit(0)
     return
+
+def reset_sleep():
+    """Get the sleep duration after RESET."""
+
+    if 'RESET_SLEEP' in os.environ:
+        return int(os.getenv('RESET_SLEEP'))
+    return 2
 
 
 # Suppress DeprecationWarning, due to msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8') in client.py
@@ -150,7 +163,7 @@ def test_send_event_stackcmd_cre_pos(server):
         # Wait for the RESET event to be processed.
         # Omitting this line breaks the test; in that case the text response to the POS
         # command is constantly: "BlueSky Console Window: Enter HELP or ? for info."
-        time.sleep(1)
+        time.sleep(reset_sleep())
 
         # Create an aircraft with a particular ID and altitude.
         cre_command_data = 'CRE {} 0 0 0 0 {} 500'.format(acid, str(altitude))
@@ -163,7 +176,7 @@ def test_send_event_stackcmd_cre_pos(server):
         attr_name = "result"
 
         # Poll for aircraft position information.
-        poll_for_position(target, server, acid, attr_name)
+        poll_for_position(target, server, acid, attr_name, 'Info on {}'.format(acid))
 
         # Check the result, i.e. the text returned by the POS command.
         result = getattr(target, attr_name)
@@ -180,7 +193,8 @@ def scenario_filename(tmpdir):
     """Write a temporary file containing scenario content and return the filename."""
 
     scenario_content = \
-        ("00:00:00.00>HOLD\n"
+        ("00:00:00.00>OP\n"
+         "00:00:00.00>HOLD\n"
          "00:00:00.00>SSD ALL\n"
          "00:00:00.00>ZOOM OUT 100\n"
          "00:00:00.00>PAN 0 0\n\n"
@@ -210,7 +224,7 @@ def test_send_event_stackcmd_ic_alt(server, scenario_filename):
         # Wait for the RESET event to be processed.
         # Omitting this line breaks the test; in that case the text response to the POS
         # command is constantly: "BlueSky Console Window: Enter HELP or ? for info."
-        time.sleep(1)
+        time.sleep(reset_sleep())
 
         # Initialise the scenario.
         target.send_event(b'STACKCMD', 'IC {}'.format(scenario_filename), target=b'*')
@@ -219,7 +233,7 @@ def test_send_event_stackcmd_ic_alt(server, scenario_filename):
         attr_name = "result"
 
         # Poll for aircraft position information.
-        poll_for_position(target, server, acid, attr_name)
+        poll_for_position(target, server, acid, attr_name, 'Info on {}'.format(acid))
 
         # Check the aircraft is at the expected altitude
         result = getattr(target, attr_name)

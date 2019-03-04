@@ -68,3 +68,10 @@ This will skip discovery and attempt a connection to the specified host (using t
 ```bash
 > python BlueSky.py --client --bluesky_host=1.2.3.4
 ```
+
+## Tests
+
+To run the unit tests (excluding upstream legacy tests which fail): 
+```
+pytest --ignore bluesky/test/tcp/ --ignore bluesky/test/traffic -W ignore::DeprecationWarning
+```
