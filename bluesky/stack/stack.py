@@ -1135,6 +1135,10 @@ def ic(filename=''):
     ''' Function implementing the IC stack command. '''
     global scenfile, scenname
 
+    # For our current use-case, we always pass the path relative to BlueSky's root directory
+    if filename and not os.path.exists(filename):
+        return False, "Error: cannot find file: " + filename
+
     # reset sim always
     bs.sim.reset()
 
