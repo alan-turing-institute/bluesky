@@ -8,3 +8,5 @@ pyopengl-accelerate
 msgpack
 zmq
 pygame
+
+semver == 2.8.*

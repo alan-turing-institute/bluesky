@@ -5,6 +5,14 @@ import sys
 import traceback
 import bluesky as bs
 
+from semver import VersionInfo
+
+
+with open('VERSION') as version_file:
+    version_str = version_file.read().strip()
+    bs.settings.version = VersionInfo.parse(version_str)
+
+
 # Create custom system-wide exception handler. For now it replicates python's
 # default traceback message. This was added to counter a new PyQt5.5 feature
 # where unhandled exceptions would result in a qFatal with a very uninformative
