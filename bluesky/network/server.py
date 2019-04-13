@@ -144,8 +144,12 @@ class Server(Thread):
                     if eventname == b'REGISTER':
                         print("Server: REGISTER")
                         # This is a registration message for a new connection
-                        # Reply with our host ID
-                        src.send_multipart([sender_id, self.host_id, b'REGISTER', b''])
+                        # Reply with our host ID and version
+                        src.send_multipart([sender_id, self.host_id,
+                                            str.encode(str(bs.settings.version)),
+                                            b'REGISTER',
+                                            b''])
+
                         # Notify clients of this change
                         if srcisclient:
                             self.clients.append(sender_id)
@@ -231,7 +235,7 @@ class Server(Thread):
                     # If we get here there is a message that needs to be forwarded
                     # Cycle the route by one step to get the next hop in the route
                     # (or the destination)
-                    
+
                     route.append(route.pop(0))
                     msg = route + [eventname, data]
 

@@ -3,8 +3,8 @@ import os
 import time
 
 import msgpack
-import time
 import zmq
+from semver import VersionInfo
 
 import bluesky
 from bluesky.network.common import get_hexid
@@ -21,6 +21,7 @@ class Client(object):
         self.poller = zmq.Poller()
         self.host_id = b''
         self.client_id = b'\x00' + os.urandom(4)
+        self.host_version = None
         self.sender_id = b''
         self.servers = dict()
         self.act = b''
@@ -88,17 +89,19 @@ class Client(object):
         self.send_event(b'REGISTER')
 
         if timeout is None:
-            self.host_id = self.event_io.recv_multipart()[0]
+            self._parse_connection_resp(self.event_io.recv_multipart())
         else:
             time.sleep(timeout)
             try:
-                self.host_id = self.event_io.recv_multipart(zmq.NOBLOCK)[0]
+                self._parse_connection_resp(self.event_io.recv_multipart(zmq.NOBLOCK))
             except zmq.ZMQError as e:
                 self.event_io.setsockopt(zmq.LINGER, 0)
                 self.event_io.close()
                 raise TimeoutError('No message received from server after {} second(s)'.format(timeout)) from e
 
-        print('Client {} connected to host {}'.format(get_hexid(self.client_id), get_hexid(self.host_id)))
+        print('Client {} connected to host {} of version {}'.format(get_hexid(self.client_id),
+                                                                    get_hexid(self.host_id),
+                                                                    self.host_version))
         self.stream_in.connect(scon)
 
         self.poller.register(self.event_io, zmq.POLLIN)
@@ -181,3 +184,7 @@ class Client(object):
             self.event_io.send_multipart([target, name, pydata])
         else:
             self.event_io.send_multipart(self._getroute(target) + [target, name, pydata])
+
+    def _parse_connection_resp(self, data):
+        self.host_id = data[0]
+        self.host_version = VersionInfo.parse(data[1].decode())
