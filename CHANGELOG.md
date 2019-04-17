@@ -11,6 +11,16 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.0.5] - 2019-04-17
+
+### Added
+
+- `semver` added to headless requirements file
+
+### Fixed
+
+- Fixed handling of client/host version checking before 1.0.4
+
 ## [1.0.4] - 2019-04-15
 
 ### Added
@@ -54,7 +64,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.4...turing-1.0.5
 [1.0.4]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.3...turing-1.0.4
 [1.0.3]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.2...turing-1.0.3
 [1.0.2]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.1...turing-1.0.2
