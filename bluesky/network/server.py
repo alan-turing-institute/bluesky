@@ -145,7 +145,8 @@ class Server(Thread):
                         print("Server: REGISTER")
                         # This is a registration message for a new connection
                         # Reply with our host ID and version
-                        src.send_multipart([sender_id, self.host_id,
+                        src.send_multipart([sender_id,
+                                            self.host_id,
                                             str.encode(str(bs.settings.version)),
                                             b'REGISTER',
                                             b''])
