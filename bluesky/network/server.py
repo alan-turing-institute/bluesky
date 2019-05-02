@@ -1,6 +1,7 @@
 ''' BlueSky simulation server. '''
 import os
 import sys
+import json
 from multiprocessing import cpu_count
 from subprocess import Popen
 from threading import Thread
@@ -163,6 +164,27 @@ class Server(Thread):
                             for client_id in self.clients:
                                 dest.send_multipart([client_id, self.host_id, b'NODESCHANGED', data])
                         continue  # No message needs to be forwarded
+
+                    elif eventname == b'SCENARIO':
+                        print('Server: SCENARIO event')
+
+                        try:
+                            unpacked = json.loads(msgpack.unpackb(data).decode('utf-8'))
+                        except Exception as exc:
+                            resp = msgpack.packb(f'Error: {exc}', use_bin_type=True)
+                            self.fe_event.send_multipart(
+                                    [sender_id, self.host_id, b'SCENARIO', resp])
+                            continue
+
+                        filename = os.path.join(bs.settings.scenario_path, unpacked['name'])
+                        if not filename.endswith('.scn'):
+                            filename += '.scn'
+
+                        with open(filename, 'w') as scn_file:
+                            scn_file.writelines(line + '\n' for line in unpacked['lines'])
+
+                        resp = msgpack.packb(f'Ok', use_bin_type=True)
+                        self.fe_event.send_multipart([sender_id, self.host_id, b'SCENARIO', resp])
 
                     elif eventname == b'NODESCHANGED':
                         print("Server: NODESCHANGED")
