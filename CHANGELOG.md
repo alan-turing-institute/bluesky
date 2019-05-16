@@ -11,9 +11,20 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2019-05-16
+
 ### Added
 
-- New server command to upload a scenario file
+- New server command to allow uploading of a scenario file
+
+### Changed
+
+- Try and find scenario files in `settings.scenario_path` if they can't be located in the given path
+- Add pip upgrade to Dockerfile
+
+### Fixed
+
+- Fixed typo in client class
 
 ## [1.0.5] - 2019-04-17
 
@@ -68,7 +79,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.0...develop
+[1.1.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.5...turing-1.1.0
 [1.0.5]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.4...turing-1.0.5
 [1.0.4]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.3...turing-1.0.4
 [1.0.3]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.2...turing-1.0.3
