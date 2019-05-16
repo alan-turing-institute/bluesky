@@ -11,6 +11,10 @@ referenced in this file.
 
 ## [Unreleased]
 
+### Added
+
+- New server command to upload a scenario file
+
 ## [1.0.5] - 2019-04-17
 
 ### Added

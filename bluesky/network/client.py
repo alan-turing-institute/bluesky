@@ -187,7 +187,7 @@ class Client(object):
 
     def _parse_connection_resp(self, data):
         if len(data) < 4:
-            raise Exception('BlueSkt host did not provide a version - please upgrade to at least '
+            raise Exception('BlueSky host did not provide a version - please upgrade to at least '
                             '1.0.4')
         self.host_id = data[0]
         self.host_version = VersionInfo.parse(data[1].decode())

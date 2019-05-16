@@ -1065,7 +1065,6 @@ def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
     instime = bs.sim.simt
     with open(fname_full, 'r') as fscen:
         for line in fscen:
-
             # Replace possible arguments: %0 by first argument, %1 by second, ..
             if pcall_arglst and line.find("%") >= 0:
                 for iarg, txtarg in enumerate(pcall_arglst):
@@ -1137,7 +1136,10 @@ def ic(filename=''):
 
     # For our current use-case, we always pass the path relative to BlueSky's root directory
     if filename and not os.path.exists(filename):
-        return False, "Error: cannot find file: " + filename
+        # Attempt to look in the scenario path
+        filename = os.path.join(settings.scenario_path, filename)
+        if not os.path.exists(filename):
+          return False, "Error: cannot find file: " + filename
 
     # reset sim always
     bs.sim.reset()
