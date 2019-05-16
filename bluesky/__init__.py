@@ -33,6 +33,9 @@ def init(mode='sim', pygame=False, discovery=False, cfgfile='', scnfile=''):
         - pygame: indicate if BlueSky is started with BlueSky_pygame.py
         - discovery: Enable network discovery
     """
+
+    print(f'# BlueSky init (\'{mode}\' mode)')
+
     # Initialize global settings first, possibly loading a custom config file
     settings.init(cfgfile)
 
@@ -43,6 +46,8 @@ def init(mode='sim', pygame=False, discovery=False, cfgfile='', scnfile=''):
     global gui_type
     gui_type = 'pygame' if pygame else \
                'none' if headless or mode[:3] == 'sim' else 'qtgl'
+
+    print(f'# BlueSky gui_type: {gui_type}')
 
     # Load navdatabase in all versions of BlueSky
     # Only the headless server doesn't need this
