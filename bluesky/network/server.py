@@ -60,6 +60,7 @@ class Server(Thread):
     def addnodes(self, count=1):
         ''' Add [count] nodes to this server. '''
         for _ in range(count):
+            print('# Spawning BlueSky sim process')
             p = Popen([sys.executable, 'BlueSky.py', '--sim'])
             self.spawned_processes.append(p)
 
@@ -107,6 +108,9 @@ class Server(Thread):
             except zmq.ZMQError:
                 print('ERROR while polling')
                 break  # interrupted
+            except KeyboardInterrupt:
+                print('# Server quitting (KeyboardInterrupt)')
+                break
 
             # The socket with incoming data
             for sock, event in events.items():
@@ -223,10 +227,21 @@ class Server(Thread):
                         continue
 
                     elif eventname == b'QUIT':
-                        print("Server: QUIT")
-                        # Send quit to all nodes
-                        route = [self.host_id, b'*']
+                        print("---\nServer event: QUIT")
+
+                        # Send quit to workers
+                        for worker_id in self.workers:
+                            self.be_event.send_multipart([worker_id, self.host_id, b'QUIT', b''])
+
+                        # Send QUIT to clients
+                        # NOTE: Chance of an infinite loop here, but clients shouldn't respond
+                        # back to a server with a quit message
+                        for client_id in self.clients:
+                            self.fe_event.send_multipart(
+                                    [client_id, self.host_id, b'QUIT', b''])
+
                         self.running = False
+                        continue
 
                     elif eventname == b'BATCH':
                         print("Server: BATCH")
@@ -251,9 +266,6 @@ class Server(Thread):
                         eventname = b'ECHO'
                         data = msgpack.packb(dict(text=echomsg, flags=0), use_bin_type=True)
 
-                    elif eventname == b'TEST_EVENT':
-                        print("... my old friend")
-
                     # ============================================================
                     # If we get here there is a message that needs to be forwarded
                     # Cycle the route by one step to get the next hop in the route
@@ -273,6 +285,10 @@ class Server(Thread):
                     else:
                         dest.send_multipart(msg)
 
+        print('# Server: Main loop exit. Waiting for spawned processes to exit...')
+
         # Wait for all nodes to finish
         for n in self.spawned_processes:
             n.wait()
+
+        print('# Server: Spawned processes joined. Server stopping')
