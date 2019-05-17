@@ -11,6 +11,12 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.1.1] - 2019-05-16
+
+## Fixed
+
+- Added proper handling of Ctrl+C and QUIT events
+
 ## [1.1.0] - 2019-05-16
 
 ### Added
@@ -79,7 +85,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.0...develop
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.1...develop
+[1.1.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.0...turing-1.1.1
 [1.1.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.5...turing-1.1.0
 [1.0.5]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.4...turing-1.0.5
 [1.0.4]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.3...turing-1.0.4

@@ -69,7 +69,17 @@ This will skip discovery and attempt a connection to the specified host (using t
 > python BlueSky.py --client --bluesky_host=1.2.3.4
 ```
 
-## Tests
+## Development
+
+### Installation
+
+To install development packages:
+
+```bash
+> pip install -r requirements-dev.txt
+```
+
+### Testing
 
 To run the unit tests (excluding upstream legacy tests which fail): 
 ```
