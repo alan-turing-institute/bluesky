@@ -15,11 +15,18 @@ import inspect
 import time
 from bluesky.tools.network import as_bytes
 
+import bluesky as bs
+from semver import VersionInfo
+
 
 BLUESKY = "BlueSky_qtgl.py"
 BUFFER_SIZE = 1024
 TCP_HOST = "127.0.0.1"
 TCP_PORT = 8888
+
+with open('VERSION') as version_file:
+    version_str = version_file.read().strip() + '-testing'
+    bs.settings.version = VersionInfo.parse(version_str)
 
 
 def sock_connect(socket_, host, port):
