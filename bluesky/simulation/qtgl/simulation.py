@@ -139,10 +139,12 @@ def Simulation(detached):
             self.syst = time.time()
             self.ffmode = False
             self.state = bs.OP
-            self.setDtMultiplier(1.0)
+            print(f'op systime {self.utc}')
+            #self.setDtMultiplier(1.0)
 
         def pause(self):
             self.syst = time.time()
+            print(f'pause systime {self.utc}')
             self.state = bs.HOLD
 
         def reset(self):
@@ -168,6 +170,7 @@ def Simulation(detached):
         def setDtMultiplier(self, mult):
             self.dtmult = mult
             self.sysdt = self.simdt / self.dtmult
+            print(f'dtmult systime {self.utc}')
 
         def setFixdt(self, flag, nsec=None):
             if flag:
