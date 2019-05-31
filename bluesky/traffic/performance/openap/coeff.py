@@ -13,6 +13,8 @@ ENG_TYPE_TF = 1         # turbofan, fixwing
 ENG_TYPE_TP = 2         # turboprop, fixwing
 ENG_TYPE_TS = 3         # turboshlft, rotor
 
+synonyms_db = settings.perf_path_openap + "/synonym.dat"
+
 fixwing_aircraft_db = settings.perf_path_openap + "/fixwing/aircraft.json"
 fixwing_engine_db = settings.perf_path_openap + "/fixwing/engines.csv"
 fixwing_envelops_dir = settings.perf_path_openap + "/fixwing/wrap/"
@@ -36,6 +38,17 @@ class Coefficient():
         self.dragpolar_fixwing = df.to_dict(orient='index')
         self.dragpolar_fixwing['NA'] = df.mean().to_dict()
 
+        # Load synonyms.dat text file into dictionary
+        self.synodict = {}
+        f_syno = open(synonyms_db,"r")
+        for line in f_syno.readlines():
+            if line.count("#")>0:
+                dataline,comment = line.split("#")
+            else:
+                dataline = line.strip("\n")
+            acmod,synomod = dataline.split("=")
+            self.synodict[acmod.strip().upper()] = synomod.strip().upper()
+        f_syno.close()
 
     def __load_all_fixwing_flavor(self):
         import warnings
@@ -43,6 +56,7 @@ class Coefficient():
 
         # read fixwing aircraft and engine files
         allengines = pd.read_csv(fixwing_engine_db, encoding='utf-8')
+        allengines['name'] = allengines['name'].str.upper()
         acs = json.load(open(fixwing_aircraft_db, 'r'))
         acs.pop('__comment')
         acs_ = {}

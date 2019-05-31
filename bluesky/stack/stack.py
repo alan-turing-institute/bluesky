@@ -18,12 +18,16 @@ from random import seed
 import re
 import os
 import os.path
+import webbrowser
 import subprocess
 import numpy as np
+from matplotlib import colors
 import bluesky as bs
 from bluesky.tools import geo, areafilter, plugin, plotter
 from bluesky.tools.aero import kts, ft, fpm, tas2cas, density
 from bluesky.tools.misc import txt2alt, tim2txt, cmdsplit
+from bluesky.tools import varexplorer as ve
+from bluesky.tools import datalog
 from bluesky.tools.calculator import calculator
 from bluesky.tools.position import txt2pos, islat
 from bluesky import settings
@@ -34,108 +38,111 @@ from . import synthetic as syn
 settings.set_variable_defaults(start_location='EHAM', scenario_path='scenario')
 
 # Global variables
-cmddict   = dict()  # Defined in stack.init
+cmddict = dict()  # Defined in stack.init
 
 #
 # Command synonym dictionary definea equivalent commands globally in stack
 #
 # Actual command definitions: see dictionary in def init(...) below
 #
-cmdsynon  = {"ADDAIRWAY": "ADDAWY",
-             "AWY": "POS",
-             "AIRPORT": "POS",
-             "AIRWAYS": "AIRWAY",
-             "CALL": "PCALL",
-             "CHDIR": "CD",
-             "CONTINUE": "OP",
-             "CREATE": "CRE",
-             "CLOSE": "QUIT",
-             "DEBUG": "CALC",
-             "DELETE": "DEL",
-             "DELWP": "DELWPT",
-             "DELROUTE": "DELRTE",
-             "DIRECTTO": "DIRECT",
-             "DIRTO": "DIRECT",
-             "DISP": "SWRAD",
-             "END": "QUIT",
-             "EXIT": "QUIT",
-             "FWD": "FF",
-             "HEADING": "HDG",
-             "HMETH": "RMETHH",
-             "HRESOM": "RMETHH",
-             "HRESOMETH": "RMETHH",
-             "LINES":"POLYLINE",
-             "LOAD": "IC",
-             "OPEN": "IC",
-             "PAUSE": "HOLD",
-             "PLUGIN": "PLUGINS",
-             "PLUG-IN": "PLUGINS",
-             "PLUG-INS": "PLUGINS",
-             "POLYGON":"POLY",
-             "POLYLINES":"POLYLINE",
-             "PRINT": "ECHO",
-             "Q": "QUIT",
-             "RTF": "DTMULT",
-             "STOP": "QUIT",
-             "RUN": "OP",
-             "RUNWAYS": "POS",
-             "RESOFACH": "RFACH",
-             "RESOFACV": "RFACV",
-             "SAVE": "SAVEIC",
-             "SPEED": "SPD",
-             "START": "OP",
-             "TRAILS": "TRAIL",
-             "TURN": "HDG",
-             "VMETH": "RMETHV",
-             "VRESOM": "RMETHV",
-             "VRESOMETH": "RMETHV",
+cmdsynon = {"ADDAIRWAY": "ADDAWY",
+            "AWY": "POS",
+            "AIRPORT": "POS",
+            "AIRWAYS": "AIRWAY",
+            "CALL": "PCALL",
+            "CHDIR": "CD",
+            "COL": "COLOR",
+            "COLOUR": "COLOR",
+            "CONTINUE": "OP",
+            "CREATE": "CRE",
+            "CLOSE": "QUIT",
+            "DEBUG": "CALC",
+            "DELETE": "DEL",
+            "DELWP": "DELWPT",
+            "DELROUTE": "DELRTE",
+            "DIRECTTO": "DIRECT",
+            "DIRTO": "DIRECT",
+            "DISP": "SWRAD",
+            "END": "QUIT",
+            "EXIT": "QUIT",
+            "FWD": "FF",
+            "HEADING": "HDG",
+            "HMETH": "RMETHH",
+            "HRESOM": "RMETHH",
+            "HRESOMETH": "RMETHH",
+            "LINES": "POLYLINE",
+            "LOAD": "IC",
+            "OPEN": "IC",
+            "PAUSE": "HOLD",
+            "PLUGIN": "PLUGINS",
+            "PLUG-IN": "PLUGINS",
+            "PLUG-INS": "PLUGINS",
+            "POLYGON": "POLY",
+            "POLYLINES": "POLYLINE",
+            "PRINT": "ECHO",
+            "Q": "QUIT",
+            "RTF": "DTMULT",
+            "STOP": "QUIT",
+            "RUN": "OP",
+            "RUNWAYS": "POS",
+            "RESOFACH": "RFACH",
+            "RESOFACV": "RFACV",
+            "SAVE": "SAVEIC",
+            "SPEED": "SPD",
+            "START": "OP",
+            "TRAILS": "TRAIL",
+            "TURN": "HDG",
+            "VMETH": "RMETHV",
+            "VRESOM": "RMETHV",
+            "VRESOMETH": "RMETHV",
 
-# Currently not implemented TMX comands trigger message on this
-             "BGPASAS": "TMX",
-             "DFFLEVEL": "TMX",
-             "FFLEVEL": "TMX",
-             "FILTCONF": "TMX",
-             "FILTTRED": "TMX",
-             "FILTTAMB": "TMX",
-             "GRAB": "TMX",
-             "HDGREF": "TMX",
-             "MOVIE": "TMX",
-             "NAVDB": "TMX",
-             "PREDASAS": "TMX",
-             "RENAME": "TMX",
-             "RETYPE": "TMX",
-             "SWNLRPASAS": "TMX",
-             "TRAFRECDT": "TMX",
-             "TRAFLOGDT": "TMX",
-             "TREACT": "TMX",
-             "WINDGRID": "TMX", # Use a scenario file with WIND commands to defin a grid and/or profiles
+            # Currently not implemented TMX comands trigger message on this
+            "BGPASAS": "TMX",
+            "DFFLEVEL": "TMX",
+            "FFLEVEL": "TMX",
+            "FILTCONF": "TMX",
+            "FILTTRED": "TMX",
+            "FILTTAMB": "TMX",
+            "GRAB": "TMX",
+            "HDGREF": "TMX",
+            "MOVIE": "TMX",
+            "NAVDB": "TMX",
+            "PREDASAS": "TMX",
+            "RENAME": "TMX",
+            "RETYPE": "TMX",
+            "SWNLRPASAS": "TMX",
+            "TRAFRECDT": "TMX",
+            "TRAFLOGDT": "TMX",
+            "TREACT": "TMX",
+            "WINDGRID": "TMX",  # Use a scenario file with WIND commands to defin a grid and/or profiles
 
-# Question mark is Help
-             "?": "HELP"
-}
+            # Question mark is Help
+            "?": "HELP"
+            }
 
 
-cmdstack  = []  # The actual stack: Current commands to be processed
+cmdstack = []  # The actual stack: Current commands to be processed
 
 # Scenario file which is read
-scenfile  = "" # Currently used scenario file (for reading)
-scenname  = "" # Currently used scenario name (for reading)
-scentime  = [] # Times of the commands from the read scenario file
-scencmd   = [] # Commands from the scenario file
+scenfile = ""  # Currently used scenario file (for reading)
+scenname = ""  # Currently used scenario name (for reading)
+scentime = []  # Times of the commands from the read scenario file
+scencmd = []  # Commands from the scenario file
 sender_rte = None  # bs net route to sender
 
 # When SAVEIC is used, we will also have a recoding scenario file handle
-savefile = None # File object of recording scenario file
-defexcl = ["PAN","ZOOM","HOLD","POS","INSEDIT","SAVEIC","QUIT","PCALL","CALC","FF",
-           "IC","OP","HOLD","RESE","MCRE","CRE","TRAFGEN"] # Commands to be excluded, default
+savefile = None  # File object of recording scenario file
+defexcl = ["PAN", "ZOOM", "HOLD", "POS", "INSEDIT", "SAVEIC", "QUIT", "PCALL", "PLOT", "CALC", "FF",
+           "IC", "OP", "HOLD", "RESET", "MCRE", "CRE", "TRAFGEN", "LISTRTE"]  # Commands to be excluded, default
 saveexcl = defexcl
-saveict0 = 0.0 # simt time of moment of SAVEIC command, 00:00:00.00 in recorded file
+saveict0 = 0.0  # simt time of moment of SAVEIC command, 00:00:00.00 in recorded file
 
 # Note (P)CALL is always excluded! Commands in the called file are saved explicitly
 
 
 # Global version
 orgcmd = ""
+
 
 def init(startup_scnfile):
     global orgcmd
@@ -165,8 +172,9 @@ def init(startup_scnfile):
     #
     #   float     = plain float
     #   int       = integer
-    #   txt       = text will be converted to upper case (for navaids, flags, waypoints,acid etc)
-    #   string    = string with lower/uppercase intact and spaces
+    #   txt       = text will be converted to upper case (for keywords, navaids, flags, waypoints,acid etc)
+    #   word      = single, case sensitive word
+    #   string    = case sensitive string
     #   on/off    = text => boolean
     #
     #   latlon    = converts acid, wpt, airport etc => lat,lon (deg) so 2 args!
@@ -186,7 +194,7 @@ def init(startup_scnfile):
         ],
         "ADDWPT": [
             "ADDWPT acid, (wpname/lat,lon/FLYBY/FLYOVER/ TAKEOFF,APT/RWY),[alt,spd,afterwp]",
-            "acid,wpt,[alt/txt,spd,wpinroute,wpinroute]",
+            "acid,wpt/txt,[alt,spd,wpinroute,wpinroute]",
             #
             # lambda *arg: short-hand for using function output as argument, equivalent with:
             #
@@ -200,7 +208,8 @@ def init(startup_scnfile):
         "AFTER": [
             "acid AFTER afterwp ADDWPT (wpname/lat,lon),[alt,spd]",
             "acid,wpinroute,txt,wpt,[alt,spd]",
-            lambda idx, *args: bs.traf.ap.route[idx].afteraddwptStack(idx, *args),
+            lambda idx, * \
+            args: bs.traf.ap.route[idx].afteraddwptStack(idx, *args),
             "After waypoint, add a waypoint to route of aircraft (FMS)"
         ],
         "AIRWAY": [
@@ -254,19 +263,28 @@ def init(startup_scnfile):
         "BEFORE": [
             "acid BEFORE beforewp ADDWPT (wpname/lat,lon),[alt,spd]",
             "acid,wpinroute,txt,wpt,[alt,spd]",
-            lambda idx, *args: bs.traf.ap.route[idx].beforeaddwptStack(idx, *args),
+            lambda idx, * \
+            args: bs.traf.ap.route[idx].beforeaddwptStack(idx, *args),
             "Before waypoint, add a waypoint to route of aircraft (FMS)"
+        ],
+        "BLUESKY": [
+            "BLUESKY",
+            "",
+            singbluesky,
+            "Sing"
         ],
         "BENCHMARK": [
             "BENCHMARK [scenfile,time]",
-            "[txt,time]",
+            "[string,time]",
             bs.sim.benchmark,
             "Run benchmark"
+
         ],
         "BOX": [
             "BOX name,lat,lon,lat,lon,[top,bottom]",
             "txt,latlon,latlon,[alt,alt]",
-            lambda name, *coords: areafilter.defineArea(name, 'BOX', coords[:4], *coords[4:]),
+            lambda name, * \
+            coords: areafilter.defineArea(name, 'BOX', coords[:4], *coords[4:]),
             "Define a box-shaped area"
         ],
         "CALC": [
@@ -277,7 +295,7 @@ def init(startup_scnfile):
         ],
         "CD": [
             "CD [path]",
-            "[txt]",
+            "[word]",
             setscenpath,
             "Change to a different scenario folder"
         ],
@@ -290,13 +308,20 @@ def init(startup_scnfile):
         "CIRCLE": [
             "CIRCLE name,lat,lon,radius,[top,bottom]",
             "txt,latlon,float,[alt,alt]",
-            lambda name, *coords: areafilter.defineArea(name, 'CIRCLE', coords[:3], *coords[3:]),
+            lambda name, * \
+            coords: areafilter.defineArea(name, 'CIRCLE', coords[:3], *coords[3:]),
             "Define a circle-shaped area"
+        ],
+        "COLOR": [
+            "COLOR name,color (named color or r,g,b)",
+            "txt,color",
+            bs.scr.color,
+            "Set a custom color for an aircraft or shape"
         ],
         "CRE": [
             "CRE acid,type,lat,lon,hdg,alt,spd",
             "txt,txt,latlon,hdg,alt,spd",
-            lambda acid,actype,lat,lon,hdg,alt,spd: bs.traf.create(
+            lambda acid, actype, lat, lon, hdg, alt, spd: bs.traf.create(
                 1, actype, alt, spd, None, lat, lon, hdg, acid),
             "Create an aircraft"
         ],
@@ -305,6 +330,12 @@ def init(startup_scnfile):
             "txt,txt,acid,hdg,float,time,[alt,time,spd]",
             bs.traf.creconfs,
             "Create an aircraft that is in conflict with 'targetid'"
+        ],
+        "CRELOG": [
+            "CRELOG LOGNAME, [dt,header]",
+            "txt,[float,string]",
+            datalog.crelog,
+            "Create a new data logger."
         ],
         "DATE": [
             "DATE [day,month,year,HH:MM:SS.hh]",
@@ -320,29 +351,30 @@ def init(startup_scnfile):
         ],
         "DEL": [
             "DEL acid/ALL/WIND/shape",
-            "acid/txt",
-            lambda a:   bs.traf.delete(a)    if isinstance(a, int) \
-                   else bs.traf.delete_all   if a == "ALL"\
-                   else bs.traf.wind.clear() if a == "WIND" \
-                   else areafilter.deleteArea(a),
+            "acid/txt,...",
+            lambda *a:
+                bs.traf.wind.clear() if isinstance(a[0], str) and a[0] == "WIND" else \
+                areafilter.deleteArea(a[0]) if isinstance(a[0], str) else \
+                bs.traf.groups.delgroup(a[0]) if hasattr(a[0], 'groupname') else \
+                bs.traf.delete(a),
             "Delete command (aircraft, wind, area)"
         ],
         "DELAY": [
             "DELAY time offset, COMMAND+ARGS",
             "time,string",
-            lambda time,*args: sched_cmd(time, args, relative=True),
+            lambda time, *args: sched_cmd(time, args, relative=True),
             "Add a delayed command to stack"
         ],
         "DELRTE": [
             "DELRTE acid",
             "acid",
-            lambda idx: bs.traf.ap.route[idx].delrte(),
+            lambda idx: bs.traf.ap.route[idx].delrte(idx),
             "Delete for this a/c the complete route/dest/orig (FMS)"
         ],
         "DELWPT": [
             "DELWPT acid,wpname",
             "acid,wpinroute",
-            lambda idx, wpname: bs.traf.ap.route[idx].delwpt(wpname),
+            lambda idx, wpname: bs.traf.ap.route[idx].delwpt(wpname, idx),
             "Delete a waypoint from a route (FMS)"
         ],
         "DEST": [
@@ -370,9 +402,9 @@ def init(startup_scnfile):
             "Show extended help window for given command, or the main documentation page if no command is given."
         ],
         "DT": [
-            "DT dt",
-            "float",
-            bs.sim.setDt,
+            "DT [dt] OR [target,dt]",
+            "[float/txt,float]",
+            lambda *args: bs.sim.setdt(*reversed(args)),
             "Set simulation time step"
         ],
         "DTLOOK": [
@@ -436,6 +468,15 @@ def init(startup_scnfile):
             bs.traf.wind.get,
             "Get wind at a specified position (and optionally at altitude)"
         ],
+        "GROUP": [
+            "GROUP [grname, (areaname OR acid,...) ]",
+            "[txt,acid/txt,...]",
+            bs.traf.groups.group,
+            "Add aircraft to a group. OR all aircraft in given area.\n" +
+            "Returns list of groups when no argument is passed.\n" +
+            "Returns list of aircraft in group when only a groupname is passed.\n" +
+            "A group is created when a group with the given name doesn't exist yet."
+        ],
         "HDG": [
             "HDG acid,hdg (deg,True)",
             "acid,float",
@@ -466,6 +507,12 @@ def init(startup_scnfile):
             bs.scr.cmdline,
             "Insert text op edit line in command window"
         ],
+        "LEGEND": [
+            "LEGEND label1, ..., labeln",
+            "word,...",
+            lambda *labels: plotter.legend(labels),
+            "Add a legend to the last created plot"
+        ],
         "LINE": [
             "LINE name,lat,lon,lat,lon",
             "txt,latlon,latlon",
@@ -483,6 +530,12 @@ def init(startup_scnfile):
             "acid,[onoff]",
             bs.traf.ap.setLNAV,
             "LNAV (lateral FMS mode) switch for autopilot"
+        ],
+        "LSVAR": [
+            "LSVAR path.to.variable",
+            "[word]",
+            ve.lsvar,
+            "Inspect any variable in a bluesky simulation"
         ],
         "MAKEDOC": [
             "MAKEDOC",
@@ -558,7 +611,7 @@ def init(startup_scnfile):
         ],
         "PLOT": [
             "PLOT [x], y [,dt,color,figure]",
-            "txt,[txt,float,txt,int]",
+            "word,[word,float,txt,int]",
             plotter.plot,
             "Create a graph of variables x versus y."
         ],
@@ -577,7 +630,8 @@ def init(startup_scnfile):
         "POLYALT": [
             "POLYALT name,top,bottom,lat,lon,lat,lon, ...",
             "txt,alt,alt,latlon,...",
-            lambda name, top, bottom, *coords: areafilter.defineArea(name, 'POLYALT', coords, top, bottom),
+            lambda name, top, bottom, * \
+                coords: areafilter.defineArea(name, 'POLYALT', coords, top, bottom),
             "Define a polygon-shaped area in 3D: between two altitudes"
         ],
         "POLYLINE": [
@@ -722,7 +776,8 @@ def init(startup_scnfile):
         "TMX": [
             "TMX",
             "",
-            lambda : bs.scr.echo("TMX command "+orgcmd+" not (yet?) implemented."),
+            lambda: bs.scr.echo("TMX command "+orgcmd + \
+                                " not (yet?) implemented."),
             "Stub for not implemented TMX commands"
         ],
         "TRAIL": [
@@ -731,7 +786,12 @@ def init(startup_scnfile):
             bs.traf.trails.setTrails,
             "Toggle aircraft trails on/off"
         ],
-
+        "UNGROUP": [
+            "UNGROUP grname, acid",
+            "txt,acid,...",
+            bs.traf.groups.ungroup,
+            "Remove aircraft from a group"
+        ],
         "VNAV": [
             "VNAV acid,[ON/OFF]",
             "acid,[onoff]",
@@ -746,7 +806,8 @@ def init(startup_scnfile):
         ],
         "WIND": [
             "WIND lat,lon,alt/*,dir,spd,[alt,dir,spd,alt,...]",
-            "latlon,[alt],float,float,...,...,...",   # last 3 args are repeated
+            # last 3 args are repeated
+            "latlon,[alt],float,float,...,...,...",
             bs.traf.wind.add,
             "Define a wind vector as part of the 2D or 3D wind field"
         ],
@@ -766,8 +827,8 @@ def init(startup_scnfile):
             "ZOOM IN/OUT or factor",
             "float/txt",
             lambda a: bs.scr.zoom(1.4142135623730951) if a == "IN" else \
-                      bs.scr.zoom(0.7071067811865475) if a == "OUT" else \
-                      bs.scr.zoom(a, True),
+            bs.scr.zoom(0.7071067811865475) if a == "OUT" else \
+            bs.scr.zoom(a, True),
             "Zoom display in/out, you can also use +++ or -----"
         ]
     }
@@ -802,6 +863,7 @@ def routetosender():
         from a scenario file), None is returned. '''
     return sender_rte
 
+
 def get_scenname():
     ''' Return the name of the current scenario.
         This is either the name defined by the SCEN command,
@@ -818,7 +880,7 @@ def set_scendata(newtime, newcmd):
     ''' Set the scenario data. This is used by the batch logic. '''
     global scentime, scencmd
     scentime = newtime
-    scencmd  = newcmd
+    scencmd = newcmd
 
 
 def scenarioinit(name):
@@ -840,7 +902,7 @@ def append_commands(newcommands):
         while args:
             opt = (args[0] == '[')
             cut = args.find(']') if opt else \
-                  args.find('[') if '[' in args else len(args)
+                args.find('[') if '[' in args else len(args)
 
             types = args[:cut].strip('[,]').split(',')
             argtypes += types
@@ -849,10 +911,12 @@ def append_commands(newcommands):
 
         cmddict[cmd] = (smallhelp, argtypes, argisopt, fun, largehelp)
 
+
 def remove_commands(commands):
     """ Remove functions from the stack """
     for cmd in commands:
         cmddict.pop(cmd)
+
 
 def showhelp(cmd=''):
     """ Generate help text for displaying or dump command reference in file
@@ -862,7 +926,7 @@ def showhelp(cmd=''):
     if not cmd:
         return "There are different ways to get help:\n" + \
                " HELP PDF  gives an overview of the existing commands\n" + \
-               " HELP cmd  gives a help line on the command (syntax)\n"  + \
+               " HELP cmd  gives a help line on the command (syntax)\n" + \
                " DOC  cmd  show documentation of a command (if available)\n" + \
                "And there is more info in the docs folder and the wiki on Github"
 
@@ -951,7 +1015,8 @@ def showhelp(cmd=''):
         table = []  # for alphabetical sort use table
         for item in cmdsynon:
             if cmdsynon[item] in cmddict and len(cmddict[cmdsynon[item]]) >= 4:
-                table.append(item + "\t" + cmdsynon[item] + "\t" + cmddict[cmdsynon[item]][4])
+                table.append(
+                    item + "\t" + cmdsynon[item] + "\t" + cmddict[cmdsynon[item]][4])
             else:
                 table.append(item + "\t" + cmdsynon[item] + "\t")
 
@@ -980,7 +1045,7 @@ def reset():
     global scentime, scencmd, scenname, saveexcl
 
     scentime = []
-    scencmd  = []
+    scencmd = []
     scenname = ''
 
     # Close recording file and reset scenario recording settings
@@ -1019,6 +1084,13 @@ def sched_cmd(time, args, relative=False):
 def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
     global scentime, scencmd
 
+    # Check for a/c id as first argument (use case: procedure files)
+    # CALL KL204 myproc should have effect as if: CALL myproc KL204
+    if mergeWithExisting and pcall_arglst and fname in bs.traf.id:
+        acid = fname
+        fname = pcall_arglst[0]
+        pcall_arglst = [acid]+list(pcall_arglst[1:])
+
     # Save original filename for if path splitting fails (relative path)
     orgfname = fname
 
@@ -1029,14 +1101,14 @@ def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
 
     # Check whether file exists
 
-    # Split the incoming filename into a path, a filename and an extension
-    path, fname = os.path.split(os.path.normpath(fname))
-    base, ext = os.path.splitext(fname)
-    path = path or os.path.normpath(settings.scenario_path)
+    # Split the incoming filename into a path + filename and an extension
+    base, ext = os.path.splitext(fname.replace('\\', '/'))
+    if not os.path.isabs(base):
+        base = os.path.join(settings.scenario_path, base)
     ext = ext or '.scn'
 
     # The entire filename, possibly with added path and extension
-    fname_full = os.path.join(path, base + ext)
+    fname_full = os.path.normpath(base + ext)
 
     # If timestamps in file should be interpreted as relative we need to add
     # the current simtime to every timestamp
@@ -1044,14 +1116,8 @@ def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
 
     # If this is a relative path we need to prefix scenario folder
     if not os.path.exists(fname_full):
-        if ".scn" not in orgfname.lower():
-            orgfname = orgfname+".scn"
-
-        if os.path.exists(settings.scenario_path + "/" + orgfname):
-            fname_full = settings.scenario_path + "/" + orgfname
-        else:
-            print("Openfile error: Cannot file", fname_full)
-            return False, "Error: cannot find file: " + fname_full
+        print("Openfile error: Cannot find file", fname_full)
+        return False, "Error: cannot find file: " + fname_full
 
     # Split scenario file line in times and commands
     if not mergeWithExisting:
@@ -1059,7 +1125,7 @@ def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
         # need to be merged with the existing commands. Otherwise the
         # old scenario commands are cleared.
         scentime = []
-        scencmd  = []
+        scencmd = []
 
     insidx = 0
     instime = bs.sim.simt
@@ -1084,14 +1150,14 @@ def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
                 imin = int(ttxt[1]) * 60.0
                 xsec = float(ttxt[2])
                 cmdtime = ihr + imin + xsec + t_offset
-                if not scentime or cmdtime > scentime[-1]:
+                if not scentime or cmdtime >= scentime[-1]:
                     scentime.append(cmdtime)
                     scencmd.append(line[icmdline + 1:].strip("\n"))
                 else:
                     if cmdtime > instime:
-                        insidx, instime = next(((i - 1, t)
-                            for i, t in enumerate(scentime) if t > cmdtime),
-                                (len(scentime), scentime[-1]))
+                        insidx, instime = next(((i, t)
+                                                for i, t in enumerate(scentime) if t >= cmdtime),
+                                               (len(scentime), scentime[-1]))
                     scentime.insert(insidx, cmdtime)
                     scencmd.insert(insidx, line[icmdline + 1:].strip("\n"))
                     insidx += 1
@@ -1109,15 +1175,17 @@ def openfile(fname, pcall_arglst=None, mergeWithExisting=False):
 
     return True
 
+
 def setscenpath(newpath):
 
-    if len(newpath)==0:
-        return False,"Needs an absolute or relative path"
+    if len(newpath) == 0:
+        return False, "Needs an absolute or relative path"
 
     # Check whether path exists
-    relpath = newpath.count(":")==0 and not (newpath[0]=="/" or newpath[0]=="\\")
+    relpath = newpath.count(":") == 0 and not (
+        newpath[0] == "/" or newpath[0] == "\\")
     if relpath:
-        abspath = os.path.join(settings.scenario_path,newpath)
+        abspath = os.path.join(settings.scenario_path, newpath)
     else:
         abspath = newpath
 
@@ -1149,12 +1217,14 @@ def ic(filename=''):
     if filename:
         result = openfile(filename)
         if result:
-            scenfile    = filename
+            scenfile = filename
             scenname, _ = os.path.splitext(os.path.basename(filename))
             # Remember this filename in IC.scn in scenario folder
-            with open(settings.scenario_path+"/"+"ic.scn","w") as keepicfile:
-                keepicfile.write("# This file is used by BlueSky to save the last used scenario file\n")
-                keepicfile.write("# So in the console type 'IC IC' to restart the previously used scenario file\n")
+            with open(settings.scenario_path+"/"+"ic.scn", "w") as keepicfile:
+                keepicfile.write(
+                    "# This file is used by BlueSky to save the last used scenario file\n")
+                keepicfile.write(
+                    "# So in the console type 'IC IC' to restart the previously used scenario file\n")
                 keepicfile.write("00:00:00.00>IC "+filename+"\n")
 
             return True, "Opened " + filename
@@ -1172,15 +1242,14 @@ def checkfile(simt):
 
 def saveic(fname=None):
     ''' Save the current traffic realization in a scenario file. '''
-    global savefile,saveexcl,saveict0
+    global savefile, saveexcl, saveict0
 
     # No args? Give current status
-    if fname=="" or fname==None:
-        if savefile==None:
+    if fname == "" or fname == None:
+        if savefile == None:
             return False
         else:
-            return True,"SAVEIC is already on\n"+"File: "+savefile.name
-
+            return True, "SAVEIC is already on\n"+"File: "+savefile.name
 
     # Is it to modify exclude list?
     if fname[:6].upper() == "CLOSE":
@@ -1189,12 +1258,12 @@ def saveic(fname=None):
         return True
 
     elif fname[:6].upper() == "EXCEPT":
-        if len(fname.strip())==6: # Only except:
-            return True,"EXCEPT is now: "+" ".join(saveexcl)
+        if len(fname.strip()) == 6:  # Only except:
+            return True, "EXCEPT is now: "+" ".join(saveexcl)
 
-        key,newexclcmds = cmdsplit(fname[6:].upper())
-        if key.upper()=="NONE":
-            saveexcl = ["INSEDIT","SAVEIC"] # bare minimum
+        key, newexclcmds = cmdsplit(fname[6:].upper())
+        if key.upper() == "NONE":
+            saveexcl = ["INSEDIT", "SAVEIC"]  # bare minimum
         else:
             newexclcmds.append(key)
             saveexcl = newexclcmds
@@ -1202,8 +1271,7 @@ def saveic(fname=None):
 
     # If recording is already on, give message
     if savefile != None:
-        return False,"SAVEIC is already on\n"+"Savefile:  "+savefile.name
-
+        return False, "SAVEIC is already on\n"+"Savefile:  "+savefile.name
 
     # Add extension .scn if not already present
     if fname.lower().find(".scn") < 0:
@@ -1211,7 +1279,7 @@ def saveic(fname=None):
 
     # If it is with path don't touch it, else add path
     if fname.find("/") < 0:
-        scenfile = bs.settings.scenario_path +"/"+ fname
+        scenfile = bs.settings.scenario_path + "/" + fname
 
     try:
         f = open(scenfile, "w")
@@ -1219,7 +1287,7 @@ def saveic(fname=None):
         return False, "Error writing to file"
 
     # Write files
-    timtxt = "00:00:00.00>" # Current time will be zero
+    timtxt = "00:00:00.00>"  # Current time will be zero
     saveict0 = bs.sim.simt
 
     for i in range(bs.traf.ntraf):
@@ -1244,7 +1312,8 @@ def saveic(fname=None):
         # Autopilot commands
         # Altitude
         if abs(bs.traf.alt[i] - bs.traf.ap.alt[i]) > 10.:
-            cmdline = "ALT " + bs.traf.id[i] + "," + repr(bs.traf.ap.alt[i] / ft)
+            cmdline = "ALT " + bs.traf.id[i] + \
+                "," + repr(bs.traf.ap.alt[i] / ft)
             f.write(timtxt + cmdline + "\n")
 
         # Heading as well when heading select
@@ -1259,7 +1328,8 @@ def saveic(fname=None):
         delspd = aptas - bs.traf.tas[i]
 
         if abs(delspd) > 0.4:
-            cmdline = "SPD " + bs.traf.id[i] + "," + repr(bs.traf.ap.spd[i] / kts)
+            cmdline = "SPD " + bs.traf.id[i] + \
+                "," + repr(bs.traf.ap.spd[i] / kts)
             f.write(timtxt + cmdline + "\n")
 
         # DEST acid,dest-apt
@@ -1307,9 +1377,11 @@ def saveic(fname=None):
     return True
 
 # Save a command line when recording is on
+
+
 def savecmd(cmdline):
-    global savefile,saveict0
-    if savefile==None:
+    global savefile, saveict0
+    if savefile == None:
         return
 
     # Write in format "HH:MM:SS.hh>
@@ -1318,14 +1390,16 @@ def savecmd(cmdline):
 
     return
 
+
 def saveclose():
     global savefile
-    if savefile!=None:
+    if savefile != None:
         savefile.close()
 
     savefile = None
 
     return
+
 
 # Regular expression for argument parser
 # Reading the regular expression:
@@ -1336,6 +1410,7 @@ def saveclose():
 # (.*)          : parse the rest of the string as the second return value
 re_getarg = re.compile(r'"?((?<=")[^"]*|(?<!")[^\s,]*)"?\s*,?\s*(.*)')
 
+
 def getnextarg(line):
     ''' Returns the next argument in "line", and the remaining text in "line".
         separators are comma and (multiple) whitespace, except when an argument
@@ -1345,7 +1420,7 @@ def getnextarg(line):
 
 
 def process():
-    global savefile,saveexcl,orgcmd
+    global savefile, saveexcl, orgcmd
 
     """process and empty command stack"""
     global sender_rte
@@ -1359,7 +1434,7 @@ def process():
             continue
 
         # Stack reply: text and flags
-        echotext  = ''
+        echotext = ''
         echoflags = 0
 
         #**********************************************************************
@@ -1371,34 +1446,35 @@ def process():
         #----------------------------------------------------------------------
         # Use getnextarg to split the command line in command and arguments
         cmd, args = getnextarg(line)
-        orgcmd    = cmd.upper()
-        cmd       = cmdsynon.get(orgcmd) or orgcmd
-        stackfun  = cmddict.get(cmd)
+        orgcmd = cmd.upper()
+        cmd = cmdsynon.get(orgcmd) or orgcmd
+        stackfun = cmddict.get(cmd)
         # If no function is found for 'cmd', check if cmd is actually an aircraft id
         if not stackfun and orgcmd in bs.traf.id:
             cmd, args = getnextarg(args)
-            args      = orgcmd + ' ' + args
-            orgcmd    = cmd.upper()
-            cmd       = cmdsynon.get(orgcmd) or orgcmd
+            args = orgcmd + ' ' + args
+            orgcmd = cmd.upper()
+            cmd = cmdsynon.get(orgcmd) or orgcmd
             # When no other args are parsed, command is POS
             stackfun = cmddict.get(cmd or 'POS')
 
         if stackfun:
             # Recording of actual validated command unless in exclude list
-            if savefile!= None and cmd not in saveexcl and cmd!="PCALL":
+            if savefile != None and cmd not in saveexcl and cmd != "PCALL":
                 savecmd(line)
 
             # Look up command in dictionary to get string with argtypes andhelp texts
             helptext, argtypes, argisopt, function = stackfun[:4]
 
             # Start with a fresh argument parser for each command
-            parser  = Argparser(argtypes, argisopt, args, function.__defaults__)
+            parser = Argparser(argtypes, argisopt, args, function.__defaults__)
 
             # Call function return flag,text
             # flag: indicates sucess
             # text: optional error message
             if parser.parse():
-                results = function(*parser.arglist)  # * = unpack list to call arguments
+                # * = unpack list to call arguments
+                results = function(*parser.arglist)
                 if isinstance(results, bool):  # Only flag is returned
                     if not results:
                         if not args:
@@ -1410,7 +1486,8 @@ def process():
                 elif isinstance(results, tuple) and results:
                     if not results[0]:
                         echoflags = bs.BS_FUNERR
-                        echotext = "Syntax error: " + (helptext if len(results) < 2 else "")
+                        echotext = "Syntax error: " + \
+                            (helptext if len(results) < 2 else "")
                     # Maybe there is also an error/info message returned?
                     if len(results) >= 2:
                         echotext += "{}: {}".format(cmd, results[1])
@@ -1426,7 +1503,7 @@ def process():
         #----------------------------------------------------------------------
         elif cmd[0] in ["+", "=", "-"]:
             nplus = cmd.count("+") + cmd.count("=")  # = equals + (same key)
-            nmin  = cmd.count("-")
+            nmin = cmd.count("-")
             bs.scr.zoom(sqrt(2) ** (nplus - nmin), absolute=False)
             if not "ZOOM" in saveexcl:
                 savecmd(line)
@@ -1454,23 +1531,23 @@ def process():
 
 class Argparser:
     # Global variables
-    reflat    = -999.  # Reference latitude for searching in nav db
-                       # in case of duplicate names
-    reflon    = -999.  # Reference longitude for searching in nav db
-                       # in case of duplicate names
+    reflat = -999.  # Reference latitude for searching in nav db
+    # in case of duplicate names
+    reflon = -999.  # Reference longitude for searching in nav db
+    # in case of duplicate names
 
     def __init__(self, argtypes, argisopt, argstring, argdefaults=None):
-        self.argtypes    = argtypes
-        self.argisopt    = argisopt
+        self.argtypes = argtypes
+        self.argisopt = argisopt
         self.argdefaults = list(argdefaults or [])
-        self.argstring   = argstring
-        self.arglist     = []
-        self.error       = ''  # Potential parsing error messages are stored here
-        self.additional  = {}  # Sometimes a parse can generate extra arguments
-                               # that can be used to fill future empty arguments.
-                               # E.g., a runway gives a lat/lon, but also a heading.
-        self.refac       = -1  # Stored aircraft idx when an argument is parsed
-                               # for a function that acts on an aircraft.
+        self.argstring = argstring
+        self.arglist = []
+        self.error = ''  # Potential parsing error messages are stored here
+        self.additional = {}  # Sometimes a parse can generate extra arguments
+        # that can be used to fill future empty arguments.
+        # E.g., a runway gives a lat/lon, but also a heading.
+        self.refac = -1  # Stored aircraft idx when an argument is parsed
+        # for a function that acts on an aircraft.
 
     def parse(self):
         curtype = 0
@@ -1480,7 +1557,7 @@ class Argparser:
             if self.argtypes[curtype][:3] == '...':
                 repeatsize = len(self.argtypes) - curtype
                 curtype = curtype - repeatsize
-            argtype    = self.argtypes[curtype].strip().split('/')
+            argtype = self.argtypes[curtype].strip().split('/')
 
             # Reset error messages
             self.error = ''
@@ -1491,16 +1568,18 @@ class Argparser:
                 result = self.parse_arg(argtypei)
                 if result:
                     # No value = None when this is allowed because it is an optional argument
-                    if None in result:
-                        if not self.argisopt[curtype]:
-                            self.error = 'No value given for mandatory argument ' + \
-                                self.argtypes[curtype]
-                            return False
-                        # If we have other default values than None, use those
-                        for i, v in enumerate(result):
-                            if v is None and self.argdefaults:
-                                result[i] = self.argdefaults[0]
-                                print('using default value from function: {}'.format(result[i]))
+                    if not isinstance(result[0], np.ndarray):
+                        if None in result:
+                            if not self.argisopt[curtype]:
+                                self.error = 'No value given for mandatory argument ' + \
+                                    self.argtypes[curtype]
+                                return False
+                            # If we have other default values than None, use those
+                            for i, v in enumerate(result):
+                                if v is None and self.argdefaults:
+                                    result[i] = self.argdefaults[0]
+                                    print(
+                                        'using default value from function: {}'.format(result[i]))
 
                     self.arglist += result
 
@@ -1517,7 +1596,7 @@ class Argparser:
                     else:
                         # No more types to check: print error message
                         self.error = "Syntax error processing argument " + \
-                                      str(curtype+1)+":\n"+self.error
+                            str(curtype+1)+":\n"+self.error
                         return False
 
             curtype += 1
@@ -1535,70 +1614,77 @@ class Argparser:
             returned, and the error message is stored in self.error """
 
         # Results are returned in a list
-        result  = []
+        result = []
 
         # Get next argument from command string
         curarg, args = getnextarg(self.argstring)
-        curarg = curarg.upper()
+        curargu = curarg.upper()
 
-        if argtype == "txt":  # simple text
-            result  = [curarg]
+        if argtype == "txt":  # simple, case insensitive text: preserve case
+            result = [curargu]
+
+        elif argtype == "word":  # single case sensitive word
+            result = [curarg]
 
         elif argtype == "string":
             result = [self.argstring]
             self.argstring = ''
+            return result
 
         elif argtype == "acid":  # aircraft id => parse index
-            idx = bs.traf.id2idx(curarg)
+            if curargu in bs.traf.groups:
+                idx = bs.traf.groups.listgroup(curargu)
+            else:
+                idx = bs.traf.id2idx(curargu)
 
-            if idx < 0:
-                self.error += curarg + " not found"
-                return False
+                if idx < 0:
+                    self.error += curargu + " not found"
+                    return False
 
-            # Update ref position for navdb lookup
-            Argparser.reflat = bs.traf.lat[idx]
-            Argparser.reflon = bs.traf.lon[idx]
-            self.refac   = idx
-            result  = [idx]
+                # Update ref position for navdb lookup
+                Argparser.reflat = bs.traf.lat[idx]
+                Argparser.reflon = bs.traf.lon[idx]
+                self.refac = idx
+            result = [idx]
 
         # Empty arg or wildcard
-        elif curarg == "" or curarg == "*":
+        elif curargu == "" or curargu == "*":
             # If there was a matching additional argument stored previously use that one
-            if argtype in self.additional and curarg == "*":
-                result  = [self.additional[argtype]]
+            if argtype in self.additional and curargu == "*":
+                result = [self.additional[argtype]]
             else:
                 # Otherwise result is None
-                result  = [None]
-
+                result = [None]
 
         elif argtype == "wpinroute":  # return text in upper case
-            wpname = curarg
+            wpname = curargu
             if self.refac >= 0 and wpname not in bs.traf.ap.route[self.refac].wpname:
-                self.error += 'There is no waypoint ' + wpname + ' in route of ' + bs.traf.id[self.refac]
+                self.error += 'There is no waypoint ' + wpname + \
+                    ' in route of ' + bs.traf.id[self.refac]
                 return False
-            result  = [wpname]
+            result = [wpname]
 
         elif argtype == "float":  # float number
             try:
-                result  = [float(curarg)]
+                result = [float(curargu)]
             except ValueError:
-                self.error += 'Argument "' + curarg + '" is not a float'
+                self.error += 'Argument "' + curargu + '" is not a float'
                 return False
 
         elif argtype == "int":   # integer
             try:
-                result  = [int(curarg)]
+                result = [int(curargu)]
             except ValueError:
-                self.error += 'Argument "' + curarg + '" is not an int'
+                self.error += 'Argument "' + curargu + '" is not an int'
                 return False
 
         elif argtype == "onoff" or argtype == "bool":
-            if curarg in ["ON", "TRUE", "YES", "1"]:
-                result  = [True]
-            elif curarg in ["OFF", "FALSE", "NO", "0"]:
-                result  = [False]
+            if curargu in ["ON", "TRUE", "YES", "1"]:
+                result = [True]
+            elif curargu in ["OFF", "FALSE", "NO", "0"]:
+                result = [False]
             else:
-                self.error += 'Argument "' + curarg + '" is not a bool'
+                self.error += 'Argument "' + curargu + '" is not a bool'
                 return False
 
         elif argtype == "wpt" or argtype == "latlon":
@@ -1611,7 +1697,7 @@ class Argparser:
             # airport:   "EHAM"
             # runway:    "EHAM/RW06" "LFPG/RWY23"
             # Default values
-            name = curarg
+            name = curargu
 
             # Try aircraft first: translate a/c id into a valid position text with a lat,lon
             idx = bs.traf.id2idx(name)
@@ -1619,15 +1705,15 @@ class Argparser:
                 name = str(bs.traf.lat[idx]) + "," + str(bs.traf.lon[idx])
 
             # Check if lat/lon combination
-            elif islat(curarg):
+            elif islat(curargu):
                 # lat,lon ? Combine into one string with a comma
                 nextarg, args = getnextarg(args)
-                name = curarg + "," + nextarg
+                name = curargu + "," + nextarg
 
             # apt,runway ? Combine into one string with a slash as separator
-            elif args[:2].upper() == "RW" and curarg in bs.navdb.aptid:
+            elif args[:2].upper() == "RW" and curargu in bs.navdb.aptid:
                 nextarg, args = getnextarg(args)
-                name = curarg + "/" + nextarg.upper()
+                name = curargu + "/" + nextarg.upper()
 
             # Return something different for the two argtypes:
 
@@ -1641,7 +1727,8 @@ class Argparser:
                 if Argparser.reflat < -180.:  # No reference avaiable yet: use screen center
                     Argparser.reflat, Argparser.reflon = bs.scr.getviewctr()
 
-                success, posobj = txt2pos(name, Argparser.reflat, Argparser.reflon)
+                success, posobj = txt2pos(
+                    name, Argparser.reflat, Argparser.reflon)
 
                 if success:
                     # for runway type, get heading as default optional argument for command line
@@ -1665,9 +1752,9 @@ class Argparser:
 
         # Pan direction: check for valid string value
         elif argtype == "pandir":
-            pandir = curarg
+            pandir = curargu
             if pandir in ["LEFT", "RIGHT", "UP", "ABOVE", "RIGHT", "DOWN"]:
-                result  = [pandir]
+                result = [pandir]
             else:
                 self.error += pandir + ' is not a valid pan argument'
                 return False
@@ -1675,57 +1762,69 @@ class Argparser:
         # CAS[kts] Mach: convert kts to m/s for values=>1.0 (meaning CAS)
         elif argtype == "spd":
             try:
-                spd = float(curarg.replace("M0.", ".")
+                spd = float(curargu.replace("M0.", ".")
                             .replace("M", ".").replace("..", "."))
 
-                if not (0.1 < spd < 1.0 or curarg.count("M") > 0):
+                if not (0.1 < spd < 1.0 or curargu.count("M") > 0):
                     spd = spd * kts
-                result  = [spd]
+                result = [spd]
             except ValueError:
-                self.error += 'Could not parse "' + curarg + '" as speed'
+                self.error += 'Could not parse "' + curargu + '" as speed'
                 return False
 
         # Vertical speed: convert fpm to in m/s
         elif argtype == "vspd":
             try:
-                result  = [fpm * float(curarg)]
+                result = [fpm * float(curargu)]
             except ValueError:
-                self.error += 'Could not parse "' + curarg + '" as vertical speed'
+                self.error += 'Could not parse "' + curargu + '" as vertical speed'
                 return False
 
         # Altutide convert ft or FL to m
         elif argtype == "alt":  # alt: FL250 or 25000 [ft]
-            alt = txt2alt(curarg)
+            alt = txt2alt(curargu)
             if alt > -1e8:
-                result  = [alt * ft]
+                result = [alt * ft]
             else:
-                self.error += 'Could not parse "' + curarg + '" as altitude'
+                self.error += 'Could not parse "' + curargu + '" as altitude'
                 return False
 
         # Heading: return float in degrees
         elif argtype == "hdg":
             try:
                 # TODO: take care of difference between magnetic/true heading
-                hdg = float(curarg.replace('T', '').replace('M', ''))
-                result  = [hdg]
+                hdg = float(curargu.replace('T', '').replace('M', ''))
+                result = [hdg]
             except ValueError:
-                self.error += 'Could not parse "' + curarg + '" as heading'
+                self.error += 'Could not parse "' + curargu + '" as heading'
                 return False
 
         # Time: convert time MM:SS.hh or HH:MM:SS.hh to a float in seconds
         elif argtype == "time":
             try:
-                ttxt = curarg.strip().split(':')
+                ttxt = curargu.strip().split(':')
                 if len(ttxt) >= 3:
-                    ihr  = int(ttxt[0]) * 3600.0
+                    ihr = int(ttxt[0]) * 3600.0
                     imin = int(ttxt[1]) * 60.0
                     xsec = float(ttxt[2])
                     result = [ihr + imin + xsec]
                 else:
-                    result = [float(curarg)]
+                    result = [float(curargu)]
             except ValueError:
-                self.error += 'Could not parse "' + curarg + '" as time'
+                self.error += 'Could not parse "' + curargu + '" as time'
                 return False
+        elif argtype == 'color':
+            try:
+                if curargu.isnumeric():
+                    g, args = getnextarg(args)
+                    b, args = getnextarg(args)
+                    result = [int(curargu), int(g), int(b)]
+                else:
+                    result = [int(255 * i) for i in colors.to_rgb(curargu)]
+            except ValueError:
+                self.error += 'Could not parse "' + curargu + '" as color'
+                return False
+
         else:
             # Argument not found: return False
             self.error += 'Unknown argument type: ' + argtype
@@ -1733,6 +1832,7 @@ class Argparser:
 
         self.argstring = args
         return result
+
 
 def distcalc(lat0, lon0, lat1, lon1):
     try:
@@ -1751,15 +1851,20 @@ def makedoc():
         if not os.path.isfile('data/html/%s.html' % name.lower()):
             with open('tmp/%s.md' % name.lower(), 'w') as f:
                 f.write('# %s: %s\n' % (name, name.capitalize()) +
-                    lst[3] + '\n\n' +
-                    '**Usage:**\n\n' +
-                    '    %s\n\n' % lst[0] +
-                    '**Arguments:**\n\n')
+                        lst[3] + '\n\n' +
+                        '**Usage:**\n\n' +
+                        '    %s\n\n' % lst[0] +
+                        '**Arguments:**\n\n')
                 if len(lst[1]) == 0:
                     f.write('This command has no arguments.\n\n')
                 else:
                     f.write('|Name|Type|Optional|Description\n' +
-                        '|--------|------|---|---------------------------------------------------\n')
+                            '|--------|------|---|---------------------------------------------------\n')
                     for arg in re_args.findall(lst[0])[1:]:
                         f.write(arg + '|     |   |\n')
                 f.write('\n[[Back to command reference.|Command Reference]]\n')
+
+
+def singbluesky():
+    webbrowser.open_new("https://youtu.be/aQUlA8Hcv4s")
+    return True

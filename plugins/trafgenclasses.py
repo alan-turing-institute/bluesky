@@ -6,7 +6,7 @@ from bluesky import stack,traf,sim,tools,navdb
 from bluesky.tools.position import txt2pos
 from bluesky.tools.geo import kwikqdrdist,kwikpos,kwikdist,latlondist,qdrdist
 from bluesky.tools.misc import degto180,txt2alt,txt2spd
-from bluesky.tools.aero import nm
+from bluesky.tools.aero import nm,ft
 
 # Default values
 swcircle = False
@@ -80,6 +80,16 @@ class Source():
         self.rwyline    = [] # number of aircraft waiting in line
         self.rwytotime  = [] # time of last takeoff
 
+        # If source type is a runway, add it as the only runway
+        if self.type=="rwy":
+            self.runways = [rwyname]
+            self.rwylat     = [self.lat]
+            self.rwylon     = [self.lon]
+            self.rwyhdg     = [int(rwyname.rstrip("LCR").lstrip("0"))*10.]
+            self.rwyline    = [] # number of aircraft waiting in line
+            self.rwytotime  = [-999] # time of last takeoff
+
+
         self.dtakeoff = 90. # sec take-off interval on one runway, default 90 sec
 
         # Destinations
@@ -93,14 +103,13 @@ class Source():
         #Names of drawing objects runways
         self.polys       = []    # Names of current runway polygons to remove when runways change
 
-        # Start values
-        self.startaltmin = -999. # [ft] minimum starting altitude
-        self.startaltmax = -999. # [ft] maximum starting altitude
-        self.startspdmin = -999. # [m/s] minimum starting speed
-        self.startspdmax = -999. # [m/s] maximum starting speed
-        self.starthdgmin = -999. # [deg] Valid values -360 - 360 degrees (to also have an interval possible around 360)
-        self.starthdgmax = -999. # [deg] Valid values -360 - 360 degrees (to also have an interval possible around 360)
-
+        # Limits on start values alt,spd,hdg
+        self.startaltmin = None
+        self.startaltmax = None
+        self.startspdmin = None
+        self.startspdmax = None
+        self.starthdgmin = None
+        self.starthdgmax = None
 
         return
 
@@ -129,6 +138,14 @@ class Source():
                     #S    print("runway added with hdg:",self.rwyhdg[-1])
                 #except:
                 #    success = False
+                self.rwyline.append(0)
+                self.rwytotime.append(-999.)
+            else:
+                self.runways.append(runwayname)
+                self.rwylat.append(self.lat)
+                self.rwylon.append(self.lon)
+                rwydigits = runwayname.lstrip("RWY").rstrip("LCR")
+                self.rwyhdg.append(10. * int(rwydigits.rstrip("LCR").lstrip("0")))
                 self.rwyline.append(0)
                 self.rwytotime.append(-999.)
 
@@ -169,7 +186,7 @@ class Source():
             self.starthdgmin = hdg0
             self.starthdgmax = hdg1
         else:
-            stack.stack("ECHO "+self.name+" HDG "+str(self.starthdgmin)+" "+str(self.starthdgmax))
+            stack.stack("ECHO ERROR "+self.name+" HDG "+str(self.starthdgmin)+" "+str(self.starthdgmax))
 
     def adddest(self,cmdargs):
         # Add destination with a given aircraft types
@@ -317,11 +334,9 @@ class Source():
                                                  str(self.rwylat[i]),str(self.rwylon[i]),str(self.rwyhdg[i]),
                                                  "0.0","0.0"]))
 
-                    stack.stack(acid + " SPD 250")
-                    stack.stack(acid + " ALT FL100")
-                    stack.stack(acid + " HDG " + str(self.rwyhdg[i]))
-                    # TBD: Add waypoint for after take-off?
-
+                    #wplat,wplon = kwikpos(self.rwylat[i],self.rwylon[i],self.rwyhdg[i],5.0*nm)
+                    #stack.stack(acid + " ADDWPT ",wplat," ",wplon)
+                    #stack.stack(acid+"LNAV ON")
                     if idest>=0:
                         if self.dest[idest][:4] != "SEGM":
                             stack.stack(acid + " DEST " + self.dest[idest])
@@ -334,13 +349,11 @@ class Source():
                     else:
                         stack.stack(acid + " ORIG " + str(self.lat) + " " + str(self.lon))
 
-                    if idest>=0 and self.desttype[idest]=="seg":
-                        lat,lon,hdg = getseg(self.dest[idest])
-                        brg,dist = kwikqdrdist(self.lat,self.lon,lat,lon)
-                        #stack.stack(acid+" HDG "+str(brg))
-                    else:
-                        stack.stack(acid+" LNAV OFF")
-                        #stack.stack(acid+" VNAV ON")
+                    stack.stack(acid + " SPD 250")
+                    stack.stack(acid + " ALT FL100")
+                    stack.stack(acid + " HDG " + str(self.rwyhdg[i]))
+
+                    stack.stack(acid+" LNAV OFF")
 
             # Not runway, then define instantly at position with random heading or in case of segment inward heading
             if gennow:
@@ -356,10 +369,18 @@ class Source():
                 else:
                     hdg = random.random()*360.
 
-                if (self.type=="apt" or self.type=="rwy") and self.incircle:
-                    alttxt,spdtxt = str(0),str(0)
+                if self.startaltmin and self.startaltmax:
+                    alt = random.randint(int(self.startaltmin), int(self.startaltmax))
                 else:
-                    alttxt,spdtxt = "FL"+str(random.randint(200,300)), str(random.randint(250,350))
+                    alt = random.randint(200, 300) * 100 * ft
+
+                if self.startspdmin and self.startspdmax:
+                    spd = random.randint(int(self.startspdmin), int(self.startspdmax))
+                else:
+                    spd = random.randint(250, 350)
+
+                alttxt, spdtxt = "FL" + str(int(round(alt / (100 * ft)))), str(spd)
+
                 # Add destination
                 if len(self.dest)>0:
                     idest = int(random.random() * len(self.dest))
@@ -461,6 +482,14 @@ class Drain():
         self.orighdg     = []  # if orig is a runway (for flights within FIR) or circle segment (drain outside FIR)
         self.origactypes = []   # Types for this originations ([]=use defaults for this drain)
         self.origincirc  = []
+
+        # Limits on start values alt,spd,hdg
+        self.startaltmin = None
+        self.startaltmax = None
+        self.startspdmin = None
+        self.startspdmax = None
+        self.starthdgmin = None
+        self.starthdgmax = None
 
         #Names of drawing objects runways
         self.polys       = []
@@ -647,7 +676,17 @@ class Drain():
                 if incirc and (self.origtype[iorig]=="apt" or self.origtype[iorig]=="rwy"):
                     alttxt,spdtxt = str(0),str(0)
                 else:
-                    alttxt,spdtxt = "FL"+str(random.randint(200,300)), str(random.randint(250,350))
+                    if self.startaltmin and self.startaltmax:
+                        alt = random.randint(int(self.startaltmin), int(self.startaltmax))
+                    else:
+                        alt = random.randint(200,300)*100*ft
+
+                    if self.startspdmin and self.startspdmax:
+                        spd = random.randint(int(self.startspdmin), int(self.startspdmax))
+                    else:
+                        spd = random.randint(250,350)
+
+                    alttxt,spdtxt = "FL"+str(int(round(alt/(100*ft)))), str(spd)
 
                 if iorig>=0:
                     acid = randacname(self.orig[iorig], self.name)
@@ -666,7 +705,7 @@ class Drain():
                         stack.stack(acid + " ORIG " + self.orig[iorig])
                     else:
                         stack.stack(acid + " ORIG " + str(self.origlat[iorig]) + " " +\
-                                     str(self.origlat[iorig]))
+                                     str(self.origlon[iorig]))
                 if not (self.name[:4]=="SEGM"):
                     stack.stack(acid + " DEST " + self.name)
                 else:
