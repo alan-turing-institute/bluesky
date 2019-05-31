@@ -1,4 +1,5 @@
 pyqt5
+PyQtWebEngine
 numpy
 scipy
 pandas
