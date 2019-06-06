@@ -18,6 +18,7 @@ referenced in this file.
 ### Fixed
 
 - Return to previous `DTMULT` value after simulation is resumed
+- Add PyQtWebEngine to requirements - fixes 'Bluesky needs pyqt5' error
 
 ## [1.1.1] - 2019-05-16
 
