@@ -11,9 +11,17 @@ referenced in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `STEP` command added to server and simulation
+
+### Fixed
+
+- Return to previous `DTMULT` value after simulation is resumed
+
 ## [1.1.1] - 2019-05-16
 
-## Fixed
+### Fixed
 
 - Added proper handling of Ctrl+C and QUIT events
 

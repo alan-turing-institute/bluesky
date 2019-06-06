@@ -10,7 +10,6 @@ from bluesky.network.common import get_hexid
 from bluesky.network.npcodec import encode_ndarray, decode_ndarray
 from bluesky.tools import Timer
 
-
 class Node(object):
     def __init__(self, event_port, stream_port):
         self.node_id = b'\x00' + os.urandom(4)
@@ -55,6 +54,9 @@ class Node(object):
 
     def run(self):
         ''' Start the main loop of this node. '''
+
+        hex_id = get_hexid(self.node_id)
+
         try:
             while self.running:
                 # Get new events from the I/O thread
@@ -65,18 +67,19 @@ class Node(object):
                     # route back to sender is acquired by reversing the incoming route
                     route.reverse()
                     if eventname == b'QUIT':
-                        print('# Node: Quitting (Received QUIT from server)')
+                        print(f'# Node({hex_id}): Quitting (Received QUIT from server)')
                         self.quit()
                     else:
                         pydata = msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8')
                         self.event(eventname, pydata, route)
+
                 # Perform a simulation step
                 self.step()
 
                 # Process timers
                 Timer.update_timers()
         except KeyboardInterrupt:
-            print('# Node: Quitting (KeyboardInterrupt)')
+            print(f'# Node({hex_id}): Quitting (KeyboardInterrupt)')
             self.quit()
 
     def addnodes(self, count=1):

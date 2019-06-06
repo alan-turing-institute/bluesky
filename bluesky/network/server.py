@@ -7,11 +7,13 @@ from subprocess import Popen
 from threading import Thread
 
 import msgpack
+import numpy as np
 import zmq
 
 # Local imports
 import bluesky as bs
 from bluesky.network.common import get_hexid
+from bluesky.network.npcodec import encode_ndarray
 from .discovery import Discovery
 
 # Register settings defaults
@@ -189,6 +191,23 @@ class Server(Thread):
 
                         resp = msgpack.packb(f'Ok', use_bin_type=True)
                         self.fe_event.send_multipart([sender_id, self.host_id, b'SCENARIO', resp])
+                        continue  # No message needs to be forwarded
+
+                    elif eventname == b'STEP':
+                        print('Server: STEP event')
+
+                        # No data is client -> sim
+                        if not msgpack.unpackb(data, encoding='utf-8'):
+                            data = msgpack.packb(np.empty([]), default=encode_ndarray,
+                                             use_bin_type=True)
+                            # Send STEP to workers
+                            for worker_id in self.workers:
+                                self.be_event.send_multipart([worker_id, self.host_id, b'STEP', data])
+                        else:  # Data means this is a response (sim -> client)
+	                        for client_id in self.clients:
+		                        self.fe_event.send_multipart(
+						                        [client_id, self.host_id, b'STEP', b''])
+                        continue  # No message needs to be forwarded
 
                     elif eventname == b'NODESCHANGED':
                         print("Server: NODESCHANGED")
@@ -233,12 +252,15 @@ class Server(Thread):
                         for worker_id in self.workers:
                             self.be_event.send_multipart([worker_id, self.host_id, b'QUIT', b''])
 
+                        data = msgpack.packb(np.empty([]), default=encode_ndarray,
+                                             use_bin_type=True)
+
                         # Send QUIT to clients
                         # NOTE: Chance of an infinite loop here, but clients shouldn't respond
                         # back to a server with a quit message
                         for client_id in self.clients:
                             self.fe_event.send_multipart(
-                                    [client_id, self.host_id, b'QUIT', b''])
+                                    [client_id, self.host_id, b'QUIT', data])
 
                         self.running = False
                         continue
