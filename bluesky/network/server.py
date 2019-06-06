@@ -196,13 +196,17 @@ class Server(Thread):
                     elif eventname == b'STEP':
                         print('Server: STEP event')
 
-                        data = msgpack.packb(np.empty([]), default=encode_ndarray,
+                        # No data is client -> sim
+                        if not msgpack.unpackb(data, encoding='utf-8'):
+                            data = msgpack.packb(np.empty([]), default=encode_ndarray,
                                              use_bin_type=True)
-
-                        # Send STEP to workers
-                        for worker_id in self.workers:
-                            self.be_event.send_multipart([worker_id, self.host_id, b'STEP', data])
-
+                            # Send STEP to workers
+                            for worker_id in self.workers:
+                                self.be_event.send_multipart([worker_id, self.host_id, b'STEP', data])
+                        else:  # Data means this is a response (sim -> client)
+	                        for client_id in self.clients:
+		                        self.fe_event.send_multipart(
+						                        [client_id, self.host_id, b'STEP', b''])
                         continue  # No message needs to be forwarded
 
                     elif eventname == b'NODESCHANGED':

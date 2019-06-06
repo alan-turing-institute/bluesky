@@ -220,6 +220,8 @@ def Simulation(detached):
                     self.step()
                 self.pause()
 
+                self.send_event(b'STEP', data=b'Ok')
+
             elif eventname == b'BATCH':
                 # We are in a batch simulation, and received an entire scenario. Assign it to the stack.
                 self.reset()
