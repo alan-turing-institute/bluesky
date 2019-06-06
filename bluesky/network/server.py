@@ -191,6 +191,19 @@ class Server(Thread):
 
                         resp = msgpack.packb(f'Ok', use_bin_type=True)
                         self.fe_event.send_multipart([sender_id, self.host_id, b'SCENARIO', resp])
+                        continue  # No message needs to be forwarded
+
+                    elif eventname == b'STEP':
+                        print('Server: STEP event')
+
+                        data = msgpack.packb(np.empty([]), default=encode_ndarray,
+                                             use_bin_type=True)
+
+                        # Send STEP to workers
+                        for worker_id in self.workers:
+                            self.be_event.send_multipart([worker_id, self.host_id, b'STEP', data])
+
+                        continue  # No message needs to be forwarded
 
                     elif eventname == b'NODESCHANGED':
                         print("Server: NODESCHANGED")

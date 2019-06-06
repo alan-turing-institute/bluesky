@@ -61,6 +61,7 @@ def Simulation(detached):
 
         def step(self):
             ''' Perform a simulation timestep. '''
+
             # When running at a fixed rate, or when in hold/init,
             # increment system time with sysdt and calculate remainder to sleep.
             if not self.ffmode or not self.state == bs.OP:
@@ -90,6 +91,7 @@ def Simulation(detached):
                     self.syst = time.time()
 
                 if bs.traf.ntraf > 0 or len(stack.get_scendata()[0]) > 0:
+                    print('# Sim: Have traffic in init mode -> calling OP')
                     self.op()
                     if self.benchdt > 0.0:
                         self.fastforward(self.benchdt)
@@ -139,12 +141,10 @@ def Simulation(detached):
             self.syst = time.time()
             self.ffmode = False
             self.state = bs.OP
-            print(f'op systime {self.utc}')
-            #self.setDtMultiplier(1.0)
+            # self.setDtMultiplier(1.0)
 
         def pause(self):
             self.syst = time.time()
-            print(f'pause systime {self.utc}')
             self.state = bs.HOLD
 
         def reset(self):
@@ -170,7 +170,6 @@ def Simulation(detached):
         def setDtMultiplier(self, mult):
             self.dtmult = mult
             self.sysdt = self.simdt / self.dtmult
-            print(f'dtmult systime {self.utc}')
 
         def setFixdt(self, flag, nsec=None):
             if flag:
@@ -204,8 +203,7 @@ def Simulation(detached):
 
         def event(self, eventname, eventdata, sender_rte):
 
-            #print('Node {} received {} data from {}'.format(self.node_id, eventname, sender_id))
-            print('SIM EVT: {0} {1}'.format(eventname, eventdata))
+            print(f'# Sim event: {eventname}')
 
             # Keep track of event processing
             event_processed = False
@@ -215,21 +213,31 @@ def Simulation(detached):
                 stack.stack(eventdata, sender_rte)
                 event_processed = True
 
+            elif eventname == b'STEP':
+                # Step 1 DTMULT's worth of time steps
+                self.op()
+                for i in range(int(self.dtmult / self.simdt)):
+                    self.step()
+                self.pause()
+
             elif eventname == b'BATCH':
                 # We are in a batch simulation, and received an entire scenario. Assign it to the stack.
                 self.reset()
                 stack.set_scendata(eventdata['scentime'], eventdata['scencmd'])
                 self.op()
                 event_processed = True
+
             elif eventname == b'QUIT':
                 # BlueSky is quitting
                 self.quit()
+
             elif eventname == b'GETSIMSTATE':
                 # Send list of stack functions available in this sim to gui at start
                 stackdict = {cmd: val[0][len(cmd) + 1:] for cmd, val in stack.cmddict.items()}
                 shapes = [shape.raw for shape in areafilter.areas.values()]
                 simstate = dict(pan=bs.scr.def_pan, zoom=bs.scr.def_zoom, stackcmds=stackdict, shapes=shapes)
                 self.send_event(b'SIMSTATE', simstate, target=sender_rte)
+
             else:
                 # This is either an unknown event or a gui event.
                 event_processed = bs.scr.event(eventname, eventdata, sender_rte)
