@@ -11,6 +11,8 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.2.0] - 2019-06-28
+
 ### Added
 
 - `STEP` command added to server and simulation
@@ -94,7 +96,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.1...develop
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.0...develop
+[1.2.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.1...turing-1.2.0
 [1.1.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.0...turing-1.1.1
 [1.1.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.5...turing-1.1.0
 [1.0.5]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.0.4...turing-1.0.5
