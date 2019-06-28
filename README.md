@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/alan-turing-institute/bluesky.svg?branch=master)](https://travis-ci.com/alan-turing-institute/bluesky)
+
 # BlueSky - The Open Air Traffic Simulator
 
 BlueSky is distributed under the GNU General Public License v3.
