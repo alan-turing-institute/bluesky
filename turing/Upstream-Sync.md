@@ -13,7 +13,7 @@ Changes since last merge:
 > git log --pretty="%h %s" 84bb60 upstream/master
 ```
 
-# Merges
+## Merges
 
 - [2019-01-21]
 

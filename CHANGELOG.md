@@ -11,9 +11,18 @@ referenced in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `STEP` command added to server and simulation
+
+### Fixed
+
+- Return to previous `DTMULT` value after simulation is resumed
+- Add PyQtWebEngine to requirements - fixes 'Bluesky needs pyqt5' error
+
 ## [1.1.1] - 2019-05-16
 
-## Fixed
+### Fixed
 
 - Added proper handling of Ctrl+C and QUIT events
 

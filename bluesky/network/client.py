@@ -119,7 +119,8 @@ class Client(object):
                 route, eventname, data = msg[:-2], msg[-2], msg[-1]
                 self.sender_id = route[0]
                 route.reverse()
-                pydata = msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8')
+                pydata = msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8') if \
+                    data else None
                 if eventname == b'NODESCHANGED':
                     self.servers.update(pydata)
                     self.nodes_changed.emit(pydata)
@@ -130,6 +131,8 @@ class Client(object):
                         self.actnode(nodes_myserver[0])
                 elif eventname == b'QUIT':
                     self.signal_quit.emit()
+                elif eventname == b'STEP':
+                    pass # Only handle this in the BlueBird implementation
                 else:
                     self.event(eventname, pydata, self.sender_id)
 
