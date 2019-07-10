@@ -90,8 +90,7 @@ def Simulation(detached):
                 if self.syst < 0.0:
                     self.syst = time.time()
 
-                if bs.traf.ntraf > 0 or len(stack.get_scendata()[0]) > 0:
-                    print('# Sim: Have traffic in init mode -> calling OP')
+                if len(stack.get_scendata()[0]) > 0:
                     self.op()
                     if self.benchdt > 0.0:
                         self.fastforward(self.benchdt)
