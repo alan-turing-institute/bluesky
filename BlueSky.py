@@ -113,8 +113,6 @@ def main():
         print("Bluesky needs", modulename)
         print("Install using e.g. pip install", modulename)
 
-    print('BlueSky normal end.')
-
 
 if __name__ == "__main__":
     # Run mainloop if BlueSky is called directly

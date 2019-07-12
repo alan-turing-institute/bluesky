@@ -186,6 +186,7 @@ class Server(Thread):
                         if not filename.endswith('.scn'):
                             filename += '.scn'
 
+                        os.makedirs(os.path.dirname(filename), exist_ok=True)
                         with open(filename, 'w') as scn_file:
                             scn_file.writelines(line + '\n' for line in unpacked['lines'])
 
