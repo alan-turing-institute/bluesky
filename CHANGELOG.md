@@ -13,6 +13,10 @@ referenced in this file.
 
 ## [1.2.1] - 2019-07-12
 
+### Added
+
+- Reloaded scenario files added to .gitignore
+
 ### Fixed
 
 - Create the directory for new scenarios if it doesn't exist
