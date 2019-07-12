@@ -91,6 +91,7 @@ def Simulation(detached):
                     self.syst = time.time()
 
                 if len(stack.get_scendata()[0]) > 0:
+                    print('INIT -> OP')
                     self.op()
                     if self.benchdt > 0.0:
                         self.fastforward(self.benchdt)
