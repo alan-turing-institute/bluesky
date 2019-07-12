@@ -90,7 +90,7 @@ def Simulation(detached):
                 if self.syst < 0.0:
                     self.syst = time.time()
 
-                if len(stack.get_scendata()[0]) > 0:
+                if bs.traf.ntraf > 0 or len(stack.get_scendata()[0]) > 0:
                     print('INIT -> OP')
                     self.op()
                     if self.benchdt > 0.0:
