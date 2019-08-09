@@ -5,7 +5,7 @@ scipy
 pandas
 matplotlib
 pyopengl
-pyopengl-accelerate
+# pyopengl-accelerate
 msgpack
 zmq
 pygame
