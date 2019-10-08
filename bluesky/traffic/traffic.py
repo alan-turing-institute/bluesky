@@ -11,7 +11,7 @@ from random import randint
 import bluesky as bs
 from bluesky.tools import geo
 from bluesky.tools.misc import latlon2txt
-from bluesky.tools.aero import fpm, kts, ft, g0, Rearth, nm, \
+from bluesky.tools.aero import fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
 
 from bluesky.tools.trafficarrays import TrafficArrays, RegisterElementParameters
@@ -106,6 +106,10 @@ class Traffic(TrafficArrays):
             self.rho     = np.array([])  # air density [kg/m3]
             self.Temp    = np.array([])  # air temperature [K]
             self.dtemp   = np.array([])  # delta t for non-ISA conditions
+
+            # Wind speeds
+            self.windnorth = np.array([])  # wind speed north component a/c pos [m/s]
+            self.windeast  = np.array([])  # wind speed east component a/c pos [m/s]
 
             # Traffic autopilot settings
             self.selspd = np.array([])  # selected spd(CAS or Mach) [m/s or -]
@@ -263,7 +267,7 @@ class Traffic(TrafficArrays):
         self.gs[-n:]      = self.tas[-n:]
         hdgrad = np.radians(achdg)
         self.gsnorth[-n:] = self.tas[-n:] * np.cos(hdgrad)
-        self.gseast[-n:]  = self.tas[-n:] * np.sin(hdgrad)
+        self.gseast[-n:] = self.tas[-n:] * np.sin(hdgrad)
 
         # Atmosphere
         self.p[-n:], self.rho[-n:], self.Temp[-n:] = vatmos(acalt)
@@ -271,12 +275,15 @@ class Traffic(TrafficArrays):
         # Wind
         if self.wind.winddim > 0:
             applywind         = self.alt[-n:]> 50.*ft
-            vnwnd, vewnd      = self.wind.getdata(self.lat[-n:], self.lon[-n:], self.alt[-n:])
-            self.gsnorth[-n:] = self.gsnorth[-n:] + vnwnd*applywind
-            self.gseast[-n:]  = self.gseast[-n:]  + vewnd*applywind
+            self.windnorth[-n:], self.windeast[-n:]  = self.wind.getdata(self.lat[-n:], self.lon[-n:], self.alt[-n:])
+            self.gsnorth[-n:] = self.gsnorth[-n:] + self.windnorth*applywind
+            self.gseast[-n:]  = self.gseast[-n:]  + self.windeast*applywind
             self.trk[-n:]     = np.logical_not(applywind)*achdg +\
                                 applywind*np.degrees(np.arctan2(self.gseast[-n:], self.gsnorth[-n:]))
             self.gs[-n:]      = np.sqrt(self.gsnorth[-n:]**2 + self.gseast[-n:]**2)
+        else:
+            self.windnorth[-n:] = 0.0
+            self.windeast[-n:]  = 0.0
 
         # Traffic performance data
         #(temporarily default values)
@@ -339,12 +346,12 @@ class Traffic(TrafficArrays):
                                  rd * vreln + rx * vrele))
 
         # Calculate intruder lat/lon
-        aclat, aclon = geo.qdrpos(latref, lonref, brn, dist / nm)
+        aclat, aclon = geo.kwikpos(latref, lonref, brn, dist / nm)
 
         # convert groundspeed to CAS, and track to heading
         wn, we     = self.wind.getdata(aclat, aclon, acalt)
         tasn, tase = gsn - wn, gse - we
-        acspd      = vtas2cas(sqrt(tasn * tasn + tase * tase), acalt)
+        acspd      = tas2cas(sqrt(tasn * tasn + tase * tase), acalt)
         achdg      = degrees(atan2(tase, tasn))
 
         # Create and, when necessary, set vertical speed
@@ -409,26 +416,27 @@ class Traffic(TrafficArrays):
     def UpdateAirSpeed(self, simdt, simt):
         # Compute horizontal acceleration
         delta_spd = self.pilot.tas - self.tas
-        need_ax = np.abs(delta_spd) > kts     # small threshold
-        self.ax = need_ax * np.sign(delta_spd) * self.perf.acceleration()
-        
+        ax = self.perf.acceleration()
+        need_ax = np.abs(delta_spd) > np.abs(simdt * ax)
+        self.ax = need_ax * np.sign(delta_spd) * ax
         # Update velocities
-        self.tas = self.tas + self.ax * simdt
+        self.tas = np.where(need_ax, self.tas + self.ax * simdt, self.pilot.tas)
         self.cas = vtas2cas(self.tas, self.alt)
         self.M = vtas2mach(self.tas, self.alt)
 
         # Turning
         turnrate = np.degrees(g0 * np.tan(self.bank) / np.maximum(self.tas, self.eps))
         delhdg = (self.pilot.hdg - self.hdg + 180) % 360 - 180  # [deg]
-        self.swhdgsel = np.abs(delhdg) > np.abs(1.5 * simdt * turnrate)
+        self.swhdgsel = np.abs(delhdg) > np.abs(simdt * turnrate)
 
         # Update heading
-        self.hdg = (self.hdg + np.where(self.swhdgsel,
-            simdt * turnrate * np.sign(delhdg), delhdg)) % 360.0
+        self.hdg = np.where(self.swhdgsel, 
+                            self.hdg + simdt * turnrate * np.sign(delhdg), self.pilot.hdg) % 360.0
 
         # Update vertical speed
         delta_alt = self.pilot.alt - self.alt
-        self.swaltsel = np.abs(delta_alt) > np.maximum(10 * ft, np.abs(2 * simdt * np.abs(self.vs)))
+        self.swaltsel = np.abs(delta_alt) > np.maximum(
+            10 * ft, np.abs(2 * np.abs(simdt * self.vs)))
         target_vs = self.swaltsel * np.sign(delta_alt) * np.abs(self.pilot.vs)
         delta_vs = target_vs - self.vs
         # print(delta_vs / fpm)
@@ -445,13 +453,15 @@ class Traffic(TrafficArrays):
 
             self.gs  = self.tas
             self.trk = self.hdg
+            self.windnorth[:], self.windeast[:] = 0.0,0.0
 
         else:
-            applywind = self.alt>50.*ft # Only apply wind when airborne and flying
+            applywind = self.alt>50.*ft # Only apply wind when airborne
 
-            windnorth, windeast = self.wind.getdata(self.lat, self.lon, self.alt)
-            self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + windnorth*applywind
-            self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + windeast*applywind
+            vnwnd,vewnd = self.wind.getdata(self.lat, self.lon, self.alt)
+            self.windnorth[:], self.windeast[:] = vnwnd,vewnd
+            self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
+            self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
 
             self.gs  = np.logical_not(applywind)*self.tas + \
                        applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)

@@ -97,7 +97,7 @@ def Simulation(detached):
                         self.bencht = time.time()
 
             if self.state == bs.OP:
-                stack.checkfile(self.simt)
+                stack.checkscen()
 
             # Always update stack
             stack.process()
@@ -128,13 +128,19 @@ def Simulation(detached):
                 self.prevstate = self.state
 
         def stop(self):
+            ''' Stack stop/quit command. '''
+            super().stop()
+
+        def quit(self):
+            ''' Quit simulation. 
+                This function is called when a QUIT signal is received from
+                the server. '''
+            super().quit()
             self.state = bs.END
             datalog.reset()
 
             # Close savefile which may be open for recording
             bs.stack.saveclose()  # Close reording file if it is on
-
-            self.quit()
 
         def op(self):
             self.syst = time.time()
@@ -194,14 +200,16 @@ def Simulation(detached):
         def sendState(self):
             self.send_event(b'STATECHANGE', self.state)
 
-        def batch(self, filename):
+        def batch(self, fname):
             # The contents of the scenario file are meant as a batch list: send to server and clear stack
-            result = stack.openfile(filename)
-            if result:
-                scentime, scencmd = stack.get_scendata()
+            self.reset()
+            try:
+                scentime, scencmd = zip(*[tc for tc in stack.readscn(fname)])            
                 self.send_event(b'BATCH', (scentime, scencmd))
-                self.reset()
-            return result
+            except FileNotFoundError:
+                return False, f'BATCH: File not found: {fname}'
+
+            return True
 
         def event(self, eventname, eventdata, sender_rte):
             # Keep track of event processing
@@ -218,9 +226,7 @@ def Simulation(detached):
                 stack.set_scendata(eventdata['scentime'], eventdata['scencmd'])
                 self.op()
                 event_processed = True
-            elif eventname == b'QUIT':
-                # BlueSky is quitting
-                self.stop()
+
             elif eventname == b'GETSIMSTATE':
                 # Send list of stack functions available in this sim to gui at start
                 stackdict = {cmd : val[0][len(cmd) + 1:] for cmd, val in stack.cmddict.items()}
