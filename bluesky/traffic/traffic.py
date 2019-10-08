@@ -751,3 +751,6 @@ class Traffic(TrafficArrays):
             tlvl = int(round(self.translvl/ft))
             return True,"Transition level = " + \
                           str(tlvl) + "/FL" +  str(int(round(tlvl/100.)))
+
+    def list_acids(self):
+        return True, " ".join(self.id)

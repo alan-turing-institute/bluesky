@@ -472,6 +472,12 @@ def init(startup_scnfile):
             lambda name, *coords: areafilter.defineArea(name, 'LINE', coords),
             "Draw a line on the radar screen"
         ],
+        "LISTAC": [
+            "LISTAC",
+            "",
+            bs.traf.list_acids,
+            "Returns a list of all the aircraft identifiers in the simulation"
+        ],
         "LISTRTE": [
             "LISTRTE acid, [pagenr]",
             "acid,[int]",

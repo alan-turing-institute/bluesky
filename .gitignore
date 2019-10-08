@@ -93,3 +93,5 @@ ssd.obj
 .ropeproject/config.py
 
 scenario/reloads/
+
+.vscode/
