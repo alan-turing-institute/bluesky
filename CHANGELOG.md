@@ -116,8 +116,9 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.2...develop
-[1.2.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.1...turing-1.2.2
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.3...develop
+[1.2.3]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.2...turing-1.2.3
+[1.2.2]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.1...turing-1.2.2
 [1.2.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.0...turing-1.2.1
 [1.2.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.1...turing-1.2.0
 [1.1.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.1.0...turing-1.1.1
