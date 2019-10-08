@@ -11,12 +11,15 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.2.3] - 2019-10-08
+
+- Add `LISTAC` stack command
+
 ## [1.2.2] - 2019-08-09
 
 ### Removed
 
 - Removed `pyopengl-accelerate` dependency
-
 
 ## [1.2.1] - 2019-07-12
 
