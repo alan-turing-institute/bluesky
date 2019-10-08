@@ -13,6 +13,8 @@ referenced in this file.
 
 ## [1.2.3] - 2019-10-08
 
+### Added
+
 - Add `LISTAC` stack command
 
 ## [1.2.2] - 2019-08-09
