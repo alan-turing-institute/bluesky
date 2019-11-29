@@ -42,7 +42,7 @@ ATM and/or Python to join us. Please feel free to comment, criticise, and contri
 ## Installation on Linux/Mac
 
 Run the install script to create the required Python virtual environment (optionally with the `--headless` flag to omit GUI dependencies for a minimal installation):
-> ./install [--headless]
+> ./install.sh [--headless]
 
 Then follow the instructions at the end of the script.
 
@@ -54,6 +54,27 @@ sudo apt-get install python3-tk
 sudo pip3 install virtualenv
 ```
 then re-run the install script.
+
+## Installation using pip
+
+Note that headless is now the default when installing using pip (in contrast to the `install.sh` method above).
+To install a full GUI environment please do the following:
+
+```bash
+# NOTE: 'full' option attempts to pip install pyopengl-acclerate, which may have issues installing
+python3 -m pip install bluesky-simulator[full] || \
+  python3 -m pip install bluesky-simulator[gui]
+```
+
+If installing in development mode change this to:
+> python3 -m pip install -e .
+
+Note that to install the GUI dependencies in development mode, this becomes:
+
+```bash
+python3 -m pip install -e .[full] || \
+  python3 -m pip install -e .[gui]
+```
 
 ## Docker support
 
