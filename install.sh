@@ -10,7 +10,7 @@ else
 fi
 
 # Check for pip3.
-if [[ `which python3 -m pip | wc -l` -gt 0 ]]; then
+if [[ `python3 -m pip | wc -l` -gt 0 ]]; then
     printf "Found pip3\n"
 else
     printf "Please install python3-pip\n"
