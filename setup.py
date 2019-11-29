@@ -27,6 +27,7 @@ setup(
     version='0.0.1.dev3',
     description='The Open Air Traffic Simulator',
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/ProfHoekstra/bluesky',
     classifiers=[
         'Development Status :: 4 - Beta',
