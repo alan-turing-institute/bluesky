@@ -66,6 +66,9 @@ python3 -m pip install bluesky-simulator[full] || \
   python3 -m pip install bluesky-simulator[gui]
 ```
 
+The pip install approach above may fail due to permissions if using the system python3.
+Either append `--user` to the pip command above or prepend `sudo` if you are on a Linux/Mac machine.    
+
 If installing in development mode from a locally cloned copy of bluesky (instead of via PyPI) change this to:
 > python3 -m pip install -e .
 
