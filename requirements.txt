@@ -1,13 +1,8 @@
-pyqt5
-PyQtWebEngine
 numpy
 scipy
-pandas
 matplotlib
-pyopengl
-# pyopengl-accelerate
 msgpack
 zmq
-pygame
+pandas
 
 semver == 2.8.*

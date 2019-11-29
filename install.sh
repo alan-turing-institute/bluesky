@@ -34,14 +34,14 @@ eval set -- $args
 
 # Parse the options
 headless=false
-requirements="requirements.txt"
+requirements="requirements-gui.txt"
 venvname="venv"
 while getopts ":he:" opt; do
   case $opt in
     h)
       printf "Headless mode installation\n"
       headless=true
-      requirements="requirements_headless.txt"
+      requirements="requirements.txt"
       ;;
     e)
       printf "Virtual environment name: $OPTARG\n"

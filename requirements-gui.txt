@@ -1,0 +1,13 @@
+pyqt5
+PyQtWebEngine
+numpy
+scipy
+pandas
+matplotlib
+pyopengl
+# pyopengl-accelerate
+msgpack
+zmq
+pygame
+
+semver == 2.8.*
