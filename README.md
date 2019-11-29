@@ -66,7 +66,7 @@ python3 -m pip install bluesky-simulator[full] || \
   python3 -m pip install bluesky-simulator[gui]
 ```
 
-If installing in development mode change this to:
+If installing in development mode from a locally cloned copy of bluesky (instead of via PyPI) change this to:
 > python3 -m pip install -e .
 
 Note that to install the GUI dependencies in development mode, this becomes:
