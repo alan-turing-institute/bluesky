@@ -2,11 +2,11 @@
 
 # Check for python3. 
 # NOTE: Uses `which` as `command` test method fails in certain environments.
-if [[ `which python3  &>/dev/null | wc -l` -gt 0]]; then
+if [[ `which python3 2>/dev/null | wc -l` -gt 0 ]]; then
     printf "Found python3\n"
 else
     printf "Please install python3\n"
-    exit 1
+    # exit 1
 fi
 
 # Check for pip3.
