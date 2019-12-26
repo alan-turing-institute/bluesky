@@ -1,15 +1,16 @@
 #!/bin/bash
 
-# Check for python3.
-if command -v python3 &>/dev/null; then
+# Check for python3. 
+# NOTE: Uses `which` as `command` test method fails in certain environments.
+if [[ `which python3 2>/dev/null | wc -l` -gt 0 ]]; then
     printf "Found python3\n"
 else
     printf "Please install python3\n"
-    exit 1
+    # exit 1
 fi
 
 # Check for pip3.
-if command -v pip3 &>/dev/null; then
+if [[ `python3 -m pip | wc -l` -gt 0 ]]; then
     printf "Found pip3\n"
 else
     printf "Please install python3-pip\n"
@@ -33,14 +34,14 @@ eval set -- $args
 
 # Parse the options
 headless=false
-requirements="requirements.txt"
+requirements="requirements-gui.txt"
 venvname="venv"
 while getopts ":he:" opt; do
   case $opt in
     h)
       printf "Headless mode installation\n"
       headless=true
-      requirements="requirements_headless.txt"
+      requirements="requirements.txt"
       ;;
     e)
       printf "Virtual environment name: $OPTARG\n"
@@ -62,14 +63,6 @@ if [ -e $venvname ]; then
     exit 1
 fi
 
-# Check for virtualenv
-if command -v virtualenv &>/dev/null; then
-    printf "Found virtualenv\n"
-else
-    printf "Please install virtualenv\n"
-    exit 1
-fi
-
 # matplotlib imports tkinter
 python3 -c "import tkinter"
 status=$?
@@ -79,15 +72,20 @@ if [[ $status != 0 ]]; then
 fi
 
 # Create a virtual environment.
+# NOTE: Fallback to python3's inbuilt venv if virtualenv fails
 printf "Creating virtual environment: $venvname\n"
-pip3 install --upgrade virtualenv
-virtualenv -p python3 $venvname
+(python3 -m pip install --upgrade virtualenv && \
+  virtualenv -p python3 $venvname) || \
+    (python3 -m venv $venvname) || (
+        printf "Please install virtualenv\n" && \
+        exit 1
+    )
 
 printf "Activating virtual environment\n"
 source $venvname/bin/activate
 
 printf "Installing dependencies\n"
-pip3 install -r $requirements
+python3 -m pip install -r $requirements
 
 status=$?
 if [[ $status != 0 ]]; then

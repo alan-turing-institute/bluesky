@@ -1,8 +1,0 @@
-numpy
-scipy
-matplotlib
-msgpack
-zmq
-pandas
-
-semver == 2.8.*
