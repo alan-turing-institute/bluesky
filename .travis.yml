@@ -13,3 +13,4 @@ env:
 
 script:
   - python3 -m pytest --ignore bluesky/test/tcp/ --ignore bluesky/test/traffic/
+  - docker build .
