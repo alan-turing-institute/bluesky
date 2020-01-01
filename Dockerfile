@@ -10,5 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN python BlueSky.py --build-caches
+
 CMD ["python", "BlueSky.py", "--headless"]
 

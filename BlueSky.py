@@ -4,6 +4,7 @@ from __future__ import print_function
 import sys
 import traceback
 import bluesky as bs
+from bluesky import settings
 
 from semver import VersionInfo
 
@@ -48,6 +49,12 @@ def main():
     # also advise latest version
     missingmodules = {"OpenGL": "pyopengl and pyopengl-accelerate",
                       "PyQt4": "pyqt5"}
+
+    if "--build-caches" in sys.argv:
+        settings.init("")
+        from bluesky.navdatabase import Navdatabase
+        Navdatabase()
+        return
 
     ### Parse command-line arguments ###
     # BlueSky.py modes:
