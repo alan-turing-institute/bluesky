@@ -384,7 +384,7 @@ def init(startup_scnfile):
         "DTMULT": [
             "DTMULT multiplier",
             "float",
-            bs.sim.setDtMultiplier,
+            setDtMult,
             "Sel multiplication factor for fast-time simulation"
         ],
         "DTNOLOOK": [
@@ -979,7 +979,12 @@ def setSeed(value):
     ''' Function that implements the SEED stack command. '''
     seed(value)
     np.random.seed(value)
+    bs.scr.echo(f"Seed set to {value}")
 
+def setDtMult(value):
+    """Set the DTMULT value and echo it back to the client"""
+    bs.sim.setDtMultiplier(value)
+    bs.scr.echo(f"DTMULT set to {mult}")
 
 def reset():
     ''' Reset the stack. '''
