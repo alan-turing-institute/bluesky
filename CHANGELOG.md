@@ -11,6 +11,13 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.3.0] - 2020-01-01
+
+### Added
+
+- TravisCI: Add pip cache, build on all branches, and add the Docker build as part of the test
+- Added a `--build-caches` option, to pre-build the Navdatabase cache files. This reduces the start-up time of the Docker container
+
 ## [1.2.3] - 2019-10-08
 
 ### Added
@@ -118,7 +125,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.3...develop
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.3.0...develop
+[1.3.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.3...turing-1.3.0
 [1.2.3]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.2...turing-1.2.3
 [1.2.2]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.1...turing-1.2.2
 [1.2.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.0...turing-1.2.1
