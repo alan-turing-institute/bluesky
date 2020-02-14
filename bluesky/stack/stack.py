@@ -984,7 +984,7 @@ def setSeed(value):
 def setDtMult(value):
     """Set the DTMULT value and echo it back to the client"""
     bs.sim.setDtMultiplier(value)
-    bs.scr.echo(f"DTMULT set to {mult}")
+    bs.scr.echo(f"DTMULT set to {value}")
 
 def reset():
     ''' Reset the stack. '''
