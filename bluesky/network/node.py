@@ -70,7 +70,7 @@ class Node(object):
                         print(f'# Node({hex_id}): Quitting (Received QUIT from server)')
                         self.quit()
                     else:
-                        pydata = msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8')
+                        pydata = msgpack.unpackb(data, object_hook=decode_ndarray, raw=False)
                         self.event(eventname, pydata, route)
 
                 # Perform a simulation step
