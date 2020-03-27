@@ -11,6 +11,12 @@ referenced in this file.
 
 ## [Unreleased]
 
+## [1.4.0] - 2020-03-27
+
+- Upgrade msgpack to v1.0.0, and fix encoding changes
+- Add client echo response to DTMULT command
+- Disable auto-start of simulation when aircraft are added
+
 ## [1.3.0] - 2020-01-01
 
 ### Added
@@ -125,7 +131,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.3.0...develop
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.4.0...develop
+[1.4.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.3.0...turing-1.4.0
 [1.3.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.3...turing-1.3.0
 [1.2.3]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.2...turing-1.2.3
 [1.2.2]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.1...turing-1.2.2

@@ -1,7 +1,7 @@
 numpy
 scipy
 matplotlib
-msgpack
+msgpack >= 1.0.0
 zmq
 pandas
 
