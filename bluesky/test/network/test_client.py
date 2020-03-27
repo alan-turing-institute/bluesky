@@ -18,9 +18,6 @@ import os
 
 from bluesky.network import Client, Server
 
-# Suppress all DeprecationWarnings for this module
-pytestmark = pytest.mark.filterwarnings("ignore:.*encoding is deprecated.*:DeprecationWarning")
-
 EVENT_PORT = 9000
 STREAM_PORT = 9001
 
@@ -149,8 +146,6 @@ def reset_sleep():
     return 2
 
 
-# Suppress DeprecationWarning, due to msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8') in client.py
-@pytest.mark.filterwarnings("ignore:.*encoding is deprecated.*:PendingDeprecationWarning")
 def test_send_event_stackcmd_cre_pos(server):
     """ Send the 'STACKCMD' event to create an aircraft & poll for its position. """
 
@@ -206,8 +201,6 @@ def scenario_filename(tmpdir):
     return p
 
 
-# Suppress DeprecationWarning, due to msgpack.unpackb(data, object_hook=decode_ndarray, encoding='utf-8') in client.py
-@pytest.mark.filterwarnings("ignore:.*encoding is deprecated.*:PendingDeprecationWarning")
 def test_send_event_stackcmd_ic_alt(server, scenario_filename):
     """ Send the 'STACKCMD' event to initialise a scenario & order a change of altitude. """
 

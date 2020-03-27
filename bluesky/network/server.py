@@ -175,7 +175,7 @@ class Server(Thread):
                         print('Server: SCENARIO event')
 
                         try:
-                            unpacked = json.loads(msgpack.unpackb(data).decode('utf-8'))
+                            unpacked = json.loads(msgpack.unpackb(data))
                         except Exception as exc:
                             resp = msgpack.packb(f'Error: {exc}', use_bin_type=True)
                             self.fe_event.send_multipart(
@@ -198,7 +198,7 @@ class Server(Thread):
                         print('Server: STEP event')
 
                         # No data is client -> sim
-                        if not msgpack.unpackb(data, encoding='utf-8'):
+                        if not msgpack.unpackb(data, raw=False):
                             data = msgpack.packb(np.empty([]), default=encode_ndarray,
                                              use_bin_type=True)
                             # Send STEP to workers
