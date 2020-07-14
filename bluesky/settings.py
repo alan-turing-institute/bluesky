@@ -46,19 +46,24 @@ def init(cfgfile=''):
     outdir = os.path.join(rundir, 'output')
     plgsrc = os.path.join(srcdir, 'plugins')
     plgdir = os.path.join(rundir, 'plugins')
-    configfile = os.path.join(rundir, 'settings.cfg')
     configsrc = os.path.join(srcdir, 'data/default.cfg')
 
     if not cfgfile:
         cfgfile = os.path.join(rundir, 'settings.cfg')
     
     # Check if alternate config file is passed
+    alt_config = False
     for i in range(len(sys.argv)):
         if len(sys.argv) > i + 1:
             if sys.argv[i] == '--config-file':
-                configfile = sys.argv[i + 1]
+                cfgfile = sys.argv[i + 1]
+                alt_config = True
             elif sys.argv[i] == '--scenfile':
                 globals()['scenfile'] = sys.argv[i + 1]
+
+    # Error if we have been passed a specific config file but it does not exist
+    if alt_config and not os.path.isfile(cfgfile):
+         raise FileNotFoundError(cfgfile)
 
     # Create config file if it doesn't exist yet. Ask for gui settings if bluesky
     # was started with BlueSky.py
