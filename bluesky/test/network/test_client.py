@@ -32,7 +32,7 @@ def server():
     """Start the server in headless mode."""
 
     try:
-        server = Server(True)
+        server = Server(True, "settings.cfg")
         server.start()
         print("Server started with host_id: {}".format(server.host_id))
     except Exception as e:
