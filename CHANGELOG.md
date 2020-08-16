@@ -11,7 +11,8 @@ referenced in this file.
 
 ## [Unreleased]
 
--
+-   Don't time.sleep if we are responding to a STEP command. This reduces the overall time taken when stepping forward multiple timesteps
+-   Fix support for config files. Any spawned child process now uses the specified one, rather than ignoring it and using the default
 
 ## [1.4.1] - 2020-03-27
 
