@@ -3,6 +3,7 @@ import os
 import sys
 import json
 from multiprocessing import cpu_count
+from pathlib import Path
 from subprocess import Popen
 from threading import Thread
 
@@ -47,6 +48,7 @@ class Server(Thread):
         self.workers = []
         self.servers = {self.host_id: dict(route=[], nodes=self.workers)}
         self.avail_workers = dict()
+        assert Path(cfgfile).is_file(), f"cfgfile '{cfgfile}' does not exist"
         self.cfgfile = cfgfile
 
         if bs.settings.enable_discovery:
