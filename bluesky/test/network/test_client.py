@@ -16,7 +16,10 @@ import time
 import sys
 import os
 
+from bluesky import settings
 from bluesky.network import Client, Server
+
+settings.init()
 
 EVENT_PORT = 9000
 STREAM_PORT = 9001
