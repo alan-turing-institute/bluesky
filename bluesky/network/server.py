@@ -3,6 +3,7 @@ import os
 import sys
 import json
 from multiprocessing import cpu_count
+from pathlib import Path
 from subprocess import Popen
 from threading import Thread
 
@@ -36,7 +37,7 @@ def split_scenarios(scentime, scencmd):
 class Server(Thread):
     ''' Implementation of the BlueSky simulation server. '''
 
-    def __init__(self, headless):
+    def __init__(self, headless, cfgfile):
         super(Server, self).__init__()
         self.spawned_processes = list()
         self.running = True
@@ -47,8 +48,10 @@ class Server(Thread):
         self.workers = []
         self.servers = {self.host_id: dict(route=[], nodes=self.workers)}
         self.avail_workers = dict()
+        assert Path(cfgfile).is_file(), f"cfgfile '{cfgfile}' does not exist"
+        self.cfgfile = cfgfile
 
-        if bs.settings.enable_discovery or headless:
+        if bs.settings.enable_discovery:
             self.discovery = Discovery(self.host_id, is_client=False)
         else:
             self.discovery = None
@@ -62,8 +65,8 @@ class Server(Thread):
     def addnodes(self, count=1):
         ''' Add [count] nodes to this server. '''
         for _ in range(count):
-            print('# Spawning BlueSky sim process')
-            p = Popen([sys.executable, 'BlueSky.py', '--sim'])
+            print(f'# Spawning BlueSky sim process ({self.cfgfile})')
+            p = Popen([sys.executable, 'BlueSky.py', '--sim', "--config-file", self.cfgfile])
             self.spawned_processes.append(p)
 
     def run(self):
@@ -149,7 +152,7 @@ class Server(Thread):
                     sender_id = route[0]
 
                     if eventname == b'REGISTER':
-                        print("Server: REGISTER")
+                        print(f"Server: REGISTER from {get_hexid(sender_id)}")
                         # This is a registration message for a new connection
                         # Reply with our host ID and version
                         src.send_multipart([sender_id,

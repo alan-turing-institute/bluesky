@@ -59,12 +59,13 @@ def Simulation(detached):
             self.ffmode = False
             self.ffstop = None
 
-        def step(self):
+        def step(self, event_step = False):
             ''' Perform a simulation timestep. '''
 
             # When running at a fixed rate, or when in hold/init,
             # increment system time with sysdt and calculate remainder to sleep.
-            if not self.ffmode or not self.state == bs.OP:
+            # NOTE(rkm 2020-07-04) Don't sleep if we are responding to a STEP command
+            if (not self.ffmode or not self.state == bs.OP) and not event_step:
                 remainder = self.syst - time.time()
                 if remainder > MINSLEEP:
                     time.sleep(remainder)
@@ -217,7 +218,7 @@ def Simulation(detached):
                 # Step 1 DTMULT's worth of time steps
                 self.op()
                 for i in range(int(self.dtmult / self.simdt)):
-                    self.step()
+                    self.step(True)
                 self.pause()
 
                 self.send_event(b'STEP', data=b'Ok')

@@ -16,7 +16,10 @@ import time
 import sys
 import os
 
+from bluesky import settings
 from bluesky.network import Client, Server
+
+settings.init()
 
 EVENT_PORT = 9000
 STREAM_PORT = 9001
@@ -32,7 +35,7 @@ def server():
     """Start the server in headless mode."""
 
     try:
-        server = Server(True)
+        server = Server(True, "settings.cfg")
         server.start()
         print("Server started with host_id: {}".format(server.host_id))
     except Exception as e:

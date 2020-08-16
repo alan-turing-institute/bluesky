@@ -11,7 +11,10 @@ referenced in this file.
 
 ## [Unreleased]
 
--
+## [1.5.0] - 2020-08-16
+
+-   Don't time.sleep if we are responding to a STEP command. This reduces the overall time taken when stepping forward multiple timesteps
+-   Fix support for config files. Any spawned child process now uses the specified one, rather than ignoring it and using the default
 
 ## [1.4.1] - 2020-03-27
 
@@ -137,7 +140,8 @@ referenced in this file.
 
 - Main window title changed to 'RedSky' (mostly a joke, but also useful to quickly see which version of the sim is running) 
 
-[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.4.1...develop
+[Unreleased]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.5.0...develop
+[1.5.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.4.1...turing-1.5.0
 [1.4.1]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.4.0...turing-1.4.1
 [1.4.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.3.0...turing-1.4.0
 [1.3.0]: https://github.com/alan-turing-institute/bluesky/compare/turing-1.2.3...turing-1.3.0
