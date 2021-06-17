@@ -1,3 +1,5 @@
+Active development moved under[Project BlueBird](https://github.com/project-bluebird).
+
 [![Build Status](https://travis-ci.com/alan-turing-institute/bluesky.svg?branch=master)](https://travis-ci.com/alan-turing-institute/bluesky)
 
 # BlueSky - The Open Air Traffic Simulator
